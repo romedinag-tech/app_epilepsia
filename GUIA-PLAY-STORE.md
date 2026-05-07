@@ -6,67 +6,68 @@
 
 ```
 facu-epilepsia-app/
-├── index.html          ← La app completa
-├── manifest.json       ← Configuración PWA
-├── sw.js               ← Service Worker (funciona sin internet)
+├── index.html               ← La app completa (v1.1)
+├── manifest.json            ← Configuración PWA
+├── sw.js                    ← Service Worker (funciona sin internet)
 ├── icons/
-│   ├── icon-192.png    ← Ícono 192×192 px  ← DEBES CREARLO
-│   └── icon-512.png    ← Ícono 512×512 px  ← DEBES CREARLO
-└── README.md
+│   ├── icon-192.png         ← DEBES CREAR este ícono (192×192 px)
+│   └── icon-512.png         ← DEBES CREAR este ícono (512×512 px)
+├── GUIA-PLAY-STORE.md       ← Este archivo
+└── POLITICA-PRIVACIDAD.txt  ← Texto para Google Sites
 ```
 
 ---
 
-## PASO 1 — CREAR LOS ÍCONOS (obligatorio)
+## NOVEDADES v1.1
 
-Necesitás dos imágenes PNG cuadradas del ícono de tu app.
+- Carga de ataques anteriores (fecha + hora en hora en hora)
+- Medicamentos: 3 fijos + 3 campos personalizables con nombre libre
+- Importación de historial desde Excel (.xlsx) o CSV
+- Botón exportar visible en Historial y en Perfil
 
-**Opción fácil — Canva (gratuito):**
+---
+
+## PASO 1 — CREAR LOS ÍCONOS
+
+Dos imágenes PNG cuadradas del ícono de tu app.
+
+**En Canva (gratis):**
 1. Ir a https://www.canva.com
-2. Crear diseño personalizado: 512×512 px
-3. Diseñar el ícono (por ejemplo: cerebro, corazón, cruz médica)
-4. Descargar como PNG → guardarlo como `icons/icon-512.png`
-5. Repetir redimensionando a 192×192 → `icons/icon-192.png`
+2. Crear diseño 512×512 px
+3. Diseñar ícono (cerebro, corazón, cruz médica, etc.)
+4. Descargar PNG → guardar como `icons/icon-512.png`
+5. Redimensionar a 192×192 → guardar como `icons/icon-192.png`
 
-**Requisito Play Store:**
-- Fondo no transparente (color sólido)
-- Sin texto demasiado pequeño
-- Formato PNG
+Requisitos: fondo sólido (no transparente), formato PNG.
 
 ---
 
 ## PASO 2 — SUBIR A GITHUB
 
-1. Crear cuenta en https://github.com (si no tenés)
-2. Crear repositorio nuevo:
-   - Nombre: `epilepsia-app`
-   - Visibilidad: **Público**
-3. Subir TODOS los archivos de esta carpeta al repositorio
-   (incluyendo la carpeta `icons/` con los dos íconos)
+1. Crear cuenta en https://github.com
+2. Crear repositorio: nombre `epilepsia-app`, visibilidad **Público**
+3. Subir TODOS los archivos (incluyendo carpeta `icons/`)
 
 ---
 
-## PASO 3 — PUBLICAR CON VERCEL (gratis, 5 minutos)
+## PASO 3 — PUBLICAR CON VERCEL
 
-1. Ir a https://vercel.com
-2. Registrarse con tu cuenta de GitHub
-3. Clic en **"Add New Project"**
-4. Seleccionar el repositorio `epilepsia-app`
-5. Clic en **"Deploy"**
+1. Ir a https://vercel.com → registrarse con GitHub
+2. "Add New Project" → seleccionar `epilepsia-app`
+3. Clic en **Deploy**
 
-✅ Vercel te da una URL como: `https://epilepsia-app.vercel.app`
+URL resultado: `https://epilepsia-app.vercel.app`
 
-Con esa URL la app ya funciona en cualquier celular.
-Desde el celular Android aparece la opción "Agregar a pantalla de inicio".
+Desde el celular Android: abrir la URL → aparece opción
+"Agregar a pantalla de inicio" → ya funciona como app instalada.
 
 ---
 
-## PASO 4 — INSTALAR NODE.JS (necesario para Bubblewrap)
+## PASO 4 — INSTALAR NODE.JS
 
-Descargar desde: https://nodejs.org
-Instalar la versión **LTS** (la recomendada).
+Descargar versión LTS desde: https://nodejs.org
 
-Verificar instalación abriendo la terminal (cmd en Windows):
+Verificar en terminal:
 ```
 node --version
 npm --version
@@ -76,145 +77,108 @@ npm --version
 
 ## PASO 5 — GENERAR EL APK CON BUBBLEWRAP
 
-Bubblewrap es la herramienta oficial de Google para convertir PWAs en apps Android.
-
-**En la terminal, ejecutar:**
-
 ```bash
 # Instalar Bubblewrap
 npm install -g @bubblewrap/cli
 
-# Crear el proyecto Android (reemplazá la URL por la tuya de Vercel)
+# Inicializar (reemplazá la URL por la tuya)
 bubblewrap init --manifest https://epilepsia-app.vercel.app/manifest.json
 
-# Durante la configuración te pedirá:
-# - Application ID: com.tuapellido.epilepsia  (ej: com.garcia.epilepsia)
-# - Display name: Seguimiento Epilepsia
-# - Dejar el resto en valores por defecto (presionar Enter)
+# Durante la configuración:
+# Application ID: com.tuapellido.epilepsia
+# Display name: Seguimiento Epilepsia
+# (resto en valores por defecto → Enter)
 
-# Construir el APK/AAB
+# Construir
 bubblewrap build
 ```
 
-Esto genera dos archivos en la carpeta del proyecto:
-- `app-release-bundle.aab` ← Este es el que subís a Play Store
-- `app-release-signed.apk` ← Para pruebas en tu celular
-
-**Para instalar en tu celular y probar antes de publicar:**
-Pasá el `.apk` a tu celular por WhatsApp o cable y abrilo.
-(Puede que pida activar "Instalar apps de fuentes desconocidas" en Ajustes)
+Archivos generados:
+- `app-release-bundle.aab` → subir a Play Store
+- `app-release-signed.apk` → instalar en tu celular para probar
 
 ---
 
-## PASO 6 — PUBLICAR EN GOOGLE PLAY STORE
+## PASO 6 — PUBLICAR EN GOOGLE PLAY
 
-Ya tenés cuenta en Google Play Console. Estos son los pasos:
+### Crear la aplicación
+1. https://play.google.com/console
+2. "Crear aplicación"
+3. Nombre: `Seguimiento Epilepsia`
+4. Tipo: Aplicación · Gratuita
+5. Aceptar políticas → Crear
 
-### 6a. Crear la aplicación
-1. Ir a https://play.google.com/console
-2. Clic en **"Crear aplicación"**
-3. Idioma predeterminado: Español
-4. Nombre: `Seguimiento Epilepsia`
-5. Tipo: Aplicación
-6. Gratuita o de pago: **Gratuita**
-7. Aceptar las políticas y crear
+### Ficha de Play Store
+Menú → Presencia en Play Store → Ficha principal
 
-### 6b. Completar la ficha de Play Store
-En el menú izquierdo → **"Presencia en Play Store" → "Ficha de Play Store principal"**
-
-Completar:
-- **Descripción breve** (80 caracteres):
-  `Registrá crisis epilépticas, medicación y compartí el historial con el médico.`
-
-- **Descripción completa** (4000 caracteres máximo):
-  ```
-  App para el seguimiento diario de crisis epilépticas en niños.
-  
-  FUNCIONES PRINCIPALES:
-  • Botón de registro rápido con confirmación de hora
-  • Control de medicamentos diarios (Kepra, Depakene, Trileptal)
-  • Historial con estadísticas: total, promedio, mejor y peor día
-  • Gráfico de crisis diarias con líneas de medicación
-  • Distribución de ataques por hora del día
-  • Exportación a CSV para enviar al médico por correo o WhatsApp
-  
-  DISEÑADA PARA FAMILIAS:
-  • Perfil personalizable con nombre y edad del paciente
-  • Funciona sin internet
-  • Interfaz simple y clara
-  
-  Los datos se guardan de forma local en el dispositivo.
-  ```
-
-- **Íconos y capturas de pantalla:**
-  - Ícono de app: 512×512 PNG (el que creaste)
-  - Capturas de pantalla: al menos 2 fotos de la app funcionando en el celular
-  - Imagen de portada: 1024×500 PNG (podés hacerla en Canva)
-
-### 6c. Configurar la app
-En **"Configuración de la app"**:
-- Categoría: **Salud y bienestar**
-- Etiquetas: epilepsia, salud, médico, niños
-- Política de privacidad: necesitás una URL (ver nota abajo)
-
-### 6d. Política de privacidad (obligatoria)
-Google requiere una URL con la política de privacidad.
-
-**Opción fácil:** Crear una página en https://sites.google.com con este texto:
-
+**Descripción breve (80 caracteres):**
 ```
-Política de Privacidad — Seguimiento Epilepsia
-
-Esta aplicación almacena todos los datos exclusivamente en el 
-dispositivo del usuario. No se recopila, transmite ni comparte 
-ningún dato personal con terceros. Los datos solo existen en 
-el celular donde se usa la app.
-
-Para eliminar todos los datos, desinstalar la aplicación.
-
-Contacto: [tu email]
+Registrá crisis epilépticas, medicación y compartí con el médico.
 ```
 
-### 6e. Subir el AAB y publicar
-1. Menú izquierdo → **"Producción"** → **"Crear nueva versión"**
-2. Subir el archivo `app-release-bundle.aab`
-3. Notas de la versión: `Versión inicial`
-4. Clic en **"Guardar"** y luego **"Revisar versión"**
-5. Clic en **"Comenzar lanzamiento en producción"**
+**Descripción completa:**
+```
+App para el seguimiento diario de crisis epilépticas en niños.
 
-⏳ Google tarda entre 1 y 3 días en revisar y aprobar la app.
-Una vez aprobada, aparece en Play Store y podés buscarla por nombre.
+FUNCIONES:
+• Botón de registro rápido con confirmación de hora
+• Carga de ataques anteriores (fecha y hora)
+• Medicamentos configurables: hasta 6 medicamentos (3 fijos + 3 a tu nombre)
+• Historial con estadísticas: total, promedio, mejor y peor día
+• Gráfico de crisis diarias con líneas de medicación día a día
+• Distribución de ataques por hora del día
+• Importación de historial desde Excel o CSV
+• Exportación a CSV para enviar al médico por correo o WhatsApp
+
+DISEÑADA PARA FAMILIAS:
+• Perfil personalizable con nombre y edad del paciente
+• 5 colores de interfaz a elegir
+• Funciona sin internet
+• Interfaz simple y clara, sin tecnicismos
+
+Los datos se guardan localmente en el dispositivo.
+```
+
+**Recursos gráficos necesarios:**
+- Ícono: 512×512 PNG
+- Capturas de pantalla: mínimo 2 fotos de la app en el celular
+- Imagen de portada: 1024×500 PNG (hacerla en Canva)
+
+**Categoría:** Salud y bienestar
+
+### Política de privacidad (obligatoria)
+Ver archivo `POLITICA-PRIVACIDAD.txt` para el texto.
+Publicarlo en https://sites.google.com y copiar la URL en Play Console.
+
+### Subir el AAB
+1. Menú → Producción → Crear nueva versión
+2. Subir `app-release-bundle.aab`
+3. Notas: `Versión inicial 1.0`
+4. Guardar → Revisar → Lanzar en producción
+
+⏳ Revisión de Google: 1 a 3 días hábiles.
+
+---
+
+## FLUJO COMPLETO
+
+```
+Íconos PNG  →  GitHub  →  Vercel (URL pública)
+                                   ↓
+                           Bubblewrap (AAB)
+                                   ↓
+                           Play Console
+                                   ↓
+                        Revisión Google (1-3 días)
+                                   ↓
+                          ✅ App en Play Store
+```
 
 ---
 
 ## ACTUALIZACIONES FUTURAS
 
-Cuando quieras actualizar la app:
-1. Modificar el `index.html`
-2. Subir los cambios a GitHub (Vercel se actualiza automático)
-3. En `manifest.json`, no es necesario cambiar nada
-4. Para actualizar en Play Store: volver a ejecutar `bubblewrap build`
-   y subir el nuevo `.aab` en Play Console como nueva versión
-
----
-
-## RESUMEN DEL PROCESO
-
-```
-Íconos PNG  →  GitHub  →  Vercel (URL pública)
-                                    ↓
-                            Bubblewrap (genera .aab)
-                                    ↓
-                            Play Console (sube .aab)
-                                    ↓
-                         Revisión Google (1-3 días)
-                                    ↓
-                            ✅ App en Play Store
-```
-
----
-
-## AYUDA
-
-Para cualquier duda en el proceso, continuá la conversación con Claude.
-Podés preguntar sobre cada paso con el mensaje exacto del error que te aparezca.
+1. Modificar `index.html`
+2. Subir cambios a GitHub (Vercel se actualiza automático)
+3. Ejecutar `bubblewrap build` nuevamente
+4. Subir nuevo `.aab` en Play Console como nueva versión
