@@ -22,15 +22,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .app{max-width:430px;margin:0 auto;padding-bottom:76px;min-height:100vh}
 .topbar{background:var(--bg);border-bottom:0.5px solid var(--bd);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;box-shadow:0 1px 8px rgba(0,0,0,0.06)}
 .topbar-left{display:flex;align-items:center;gap:10px}
-.avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;overflow:hidden;background-size:cover;background-position:center}
+.avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 .top-name{font-size:15px;font-weight:600;color:var(--t1)}.top-sub{font-size:11px;color:var(--t2);margin-top:1px}
 .badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600}
 .tab-bar{display:flex;background:var(--bg);border-bottom:0.5px solid var(--bd);position:sticky;top:62px;z-index:9}
 .tab{flex:1;padding:10px 1px;font-size:10px;font-weight:500;color:var(--t2);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;text-align:center}
 .tab.active{color:var(--cf);border-bottom-color:var(--cf)}
 .section{display:none;padding:14px}.section.active{display:block}
-.big-btn{width:100%;padding:20px;font-size:19px;font-weight:700;border:none;border-radius:var(--rl);cursor:pointer;margin-bottom:12px;background:var(--cf);color:#fff;transition:transform .1s,filter .1s;box-shadow:0 3px 12px rgba(74,144,217,0.3)}
-.big-btn:active{transform:scale(0.97);filter:brightness(0.92)}
+.big-btn{width:100%;padding:18px 20px;font-size:18px;font-weight:700;border:none;border-radius:30px;cursor:pointer;margin-bottom:12px;background:linear-gradient(135deg,#0D2E6E,#1A5FA0,#2176C7);color:#fff;transition:transform .12s,box-shadow .12s;box-shadow:0 0 0 2px rgba(100,200,255,0.6),0 0 18px rgba(74,144,217,0.5),0 4px 16px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;gap:12px;letter-spacing:.2px;position:relative;overflow:hidden}
+.big-btn::before{content:'';position:absolute;inset:0;border-radius:30px;border:1.5px solid rgba(120,210,255,0.5);pointer-events:none}
+.big-btn:active{transform:scale(0.97);box-shadow:0 0 0 2px rgba(100,200,255,0.4),0 0 10px rgba(74,144,217,0.3)}
+.big-btn svg{flex-shrink:0;filter:drop-shadow(0 0 4px rgba(160,230,255,0.9))}
 .card{background:var(--bg);border:0.5px solid var(--bd);border-radius:var(--rl);padding:13px 14px;margin-bottom:11px;box-shadow:0 1px 4px rgba(0,0,0,0.04)}
 .card-title{font-size:10px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.9px;margin-bottom:10px}
 .field{margin-bottom:11px}.field label{display:block;font-size:11px;color:var(--t2);margin-bottom:4px;font-weight:500}
@@ -140,13 +143,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <button class="tab" onclick="pTab('perf',this)">Perfil</button>
   </div>
   <div id="p-sec-reg" class="section active">
-    <button class="big-btn" onclick="openConfirm()">+ Registrar ataque ahora</button>
-    <div class="card">
-      <div class="card-title">Cargar datos históricos</div>
-      <button class="btn-soft" style="margin-bottom:8px" onclick="downloadTemplate()">⬇️ Descargar plantilla Excel</button>
-      <div class="import-zone" onclick="document.getElementById('p-xl').click()"><input type="file" id="p-xl" accept=".xlsx,.xls,.csv" onchange="importPatientFile(this)"><div style="font-size:20px;margin-bottom:2px">📂</div><div style="font-size:13px;font-weight:600;color:var(--t1)">Subir archivo</div><div style="font-size:11px;color:var(--t2);margin-top:2px">.xlsx · .csv</div></div>
-      <div class="import-result" id="p-import-res"></div><div id="p-files-list"></div>
-    </div>
+    <button class="big-btn" onclick="openConfirm()">
+  <svg width="28" height="22" viewBox="0 0 28 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <polyline points="0,11 4,11 6,3 8,19 10,7 12,14 14,11 18,11" stroke="rgba(160,230,255,0.95)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <circle cx="22" cy="11" r="5" stroke="rgba(160,230,255,0.95)" stroke-width="1.6" fill="none"/>
+    <line x1="22" y1="8" x2="22" y2="14" stroke="rgba(160,230,255,0.95)" stroke-width="1.6" stroke-linecap="round"/>
+    <line x1="19" y1="11" x2="25" y2="11" stroke="rgba(160,230,255,0.95)" stroke-width="1.6" stroke-linecap="round"/>
+  </svg>
+  Registrar ataque ahora
+</button>
     <div class="card">
       <div class="card-title">Medicamentos activos</div>
       <div id="p-med-list"><div class="empty" style="padding:8px 0">Sin medicamentos</div></div>
@@ -161,6 +166,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         </div>
         <button class="btn-primary" onclick="savePMed()">Guardar</button>
       </div>
+    </div>
+    <div class="card" style="border:0.5px solid var(--bd);background:var(--bg2)">
+      <div class="card-title" style="font-size:9px;color:var(--t3)">Datos históricos</div>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <button style="flex:1;padding:9px 8px;border:0.5px solid var(--bd2);border-radius:var(--rm);font-size:12px;font-weight:500;cursor:pointer;background:var(--bg);color:var(--t2);display:flex;align-items:center;justify-content:center;gap:5px" onclick="downloadTemplate()"><span>⬇️</span>Descargar plantilla</button>
+        <button style="flex:1;padding:9px 8px;border:0.5px solid var(--bd2);border-radius:var(--rm);font-size:12px;font-weight:500;cursor:pointer;background:var(--bg);color:var(--t2);display:flex;align-items:center;justify-content:center;gap:5px" onclick="document.getElementById('p-xl').click()"><span>📂</span>Subir archivo<input type="file" id="p-xl" accept=".epilepsia,.csv,.xlsx,.xls" onchange="importPatientFile(this)" style="display:none"></button>
+      </div>
+      <div class="import-result" id="p-import-res"></div><div id="p-files-list"></div>
     </div>
     <div class="card">
       <div class="card-title">Cargar ataque anterior</div>
@@ -182,8 +195,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="stat"><div class="lbl">Peor día</div><div class="val" id="p-st-worst">—</div><div class="sub">más ataques</div></div>
     </div>
     <div class="card"><div class="card-title">Últimos 14 días <span style="font-size:10px;font-weight:400;color:var(--t3)">— tocá una fecha para detalles</span></div><div id="p-hist-list"><div class="empty">Sin datos</div></div></div>
-    <button class="btn-soft" onclick="exportPatientCSV()">📤 Enviar al médico (CSV)</button>
-    <p style="font-size:11px;color:var(--t3);text-align:center;margin-top:5px;margin-bottom:11px">Mismo formato que la plantilla — reimportable</p>
+    <button class="btn-soft" onclick="sharePatientData()" style="margin-bottom:8px">📤 Compartir datos (.epilepsia)</button>
+    <p style="font-size:11px;color:var(--t3);text-align:center;margin-bottom:11px">Se comparte por correo, WhatsApp o cualquier app. Al abrirlo, la app pregunta qué hacer con los datos.</p>
   </div>
   <div id="p-sec-graf" class="section">
     <div class="card" style="padding:11px 14px">
@@ -213,6 +226,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div id="p-sec-perf" class="section">
     <div class="card">
       <div class="card-title">Perfil</div>
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
+        <div id="p-cfg-avatar" style="width:64px;height:64px;border-radius:50%;overflow:hidden;background:var(--cl);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:var(--ct);flex-shrink:0;cursor:pointer;border:2px solid var(--bd2)" onclick="document.getElementById('p-photo-input').click()">FA</div>
+        <div style="flex:1"><div style="font-size:13px;font-weight:500;color:var(--t1);margin-bottom:3px">Foto del paciente</div><div style="font-size:11px;color:var(--t2)">Tocá el círculo para cambiar la foto</div><input type="file" id="p-photo-input" accept="image/*" style="display:none" onchange="loadPatientPhoto(this)"></div>
+      </div>
       <div class="field"><label>Nombre</label><input type="text" id="p-cfg-name" maxlength="30" autocomplete="off"></div>
       <div class="field"><label>Fecha de nacimiento</label><input type="date" id="p-cfg-dob" oninput="previewAge('p-cfg-dob','p-cfg-age')"><div class="age-display" id="p-cfg-age"></div></div>
       <div class="field"><label>Color</label><div class="color-row" id="p-cfg-colors"></div></div>
@@ -301,6 +318,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="overlay" id="confirm-overlay"><div class="dialog"><h3 id="dlg-title">Registrar ataque</h3><div class="time-big" id="dlg-time">--:--</div><p>¿Confirmás el registro?</p><div class="dbtn-row"><button class="dbtn-cancel" onclick="closeConfirm()">Cancelar</button><button class="dbtn-ok" onclick="confirmAttack()">Confirmar</button></div></div></div>
 <div class="overlay" id="delete-overlay"><div class="dialog"><h3>Confirmar borrado</h3><p id="del-msg">¿Estás seguro?</p><div class="dbtn-row"><button class="dbtn-cancel" onclick="closeDelete()">Cancelar</button><button class="dbtn-ok" style="background:#E05252" onclick="confirmDelete()">Borrar</button></div></div></div>
 <div class="overlay" id="custom-overlay"><div class="dialog"><h3>Rango personalizado</h3><p>Cantidad de días a mostrar</p><input type="number" id="custom-days" min="1" max="999" placeholder="Ej: 45" style="width:100%;padding:10px;border:0.5px solid var(--bd2);border-radius:var(--rm);font-size:20px;text-align:center;margin-bottom:12px;background:var(--bg);color:var(--t1)"><div class="dbtn-row"><button class="dbtn-cancel" onclick="closeCustom()">Cancelar</button><button class="dbtn-ok" onclick="applyCustom()">Aplicar</button></div></div></div>
+<!-- DIÁLOGO IMPORTACIÓN INTELIGENTE -->
+<div class="overlay" id="import-overlay">
+  <div class="dialog" style="max-width:320px">
+    <div style="font-size:24px;margin-bottom:10px">📥</div>
+    <h3 style="margin-bottom:6px">Archivo recibido</h3>
+    <p id="import-dlg-msg" style="font-weight:600;color:var(--t1);margin-bottom:6px;font-size:14px"></p>
+    <p id="import-dlg-sub" style="font-size:12px;color:var(--t2);margin-bottom:16px;line-height:1.5"></p>
+    <!-- Botones para mismo paciente -->
+    <div id="import-dlg-same" style="display:flex;flex-direction:column;gap:8px">
+      <button onclick="confirmImportMerge()" style="padding:11px;border:none;border-radius:var(--rm);background:var(--cf);color:#fff;font-size:14px;font-weight:600;cursor:pointer">Agregar a los datos existentes</button>
+      <button onclick="confirmImportReplace()" style="padding:11px;border:0.5px solid #E05252;border-radius:var(--rm);background:var(--bg);color:#E05252;font-size:13px;font-weight:500;cursor:pointer">Reemplazar datos anteriores</button>
+      <button onclick="document.getElementById('import-overlay').classList.remove('open')" style="padding:9px;border:0.5px solid var(--bd2);border-radius:var(--rm);background:var(--bg);color:var(--t2);font-size:13px;cursor:pointer">Cancelar</button>
+    </div>
+    <!-- Botón extra solo para paciente nuevo -->
+    <div id="import-dlg-new" style="display:none;margin-top:8px;padding-top:8px;border-top:0.5px solid var(--bd)">
+      <button onclick="confirmImportNewPatient()" style="width:100%;padding:10px;border:none;border-radius:var(--rm);background:#27AE60;color:#fff;font-size:13px;font-weight:600;cursor:pointer">Crear como nuevo paciente</button>
+    </div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -348,12 +384,34 @@ function launchPatient(){
   SC=getC(G.patient.profile.colorId||'sky');applyTheme();
   document.getElementById('app-patient').style.display='block';document.getElementById('app-doctor').style.display='none';
   const p=G.patient.profile;
-  document.getElementById('p-avatar').textContent=(p.name||'EP').substring(0,2).toUpperCase();
+  const av=document.getElementById('p-avatar');
+  if(G.patient.profile.photo){av.innerHTML=`<img src="${G.patient.profile.photo}" alt="foto">`;av.style.background='transparent';}
+  else{av.textContent=(p.name||'EP').substring(0,2).toUpperCase();av.style.background='';av.innerHTML='<span>'+(p.name||'EP').substring(0,2).toUpperCase()+'</span>';}
   document.getElementById('p-topname').textContent=p.name||'';document.getElementById('p-topage').textContent=calcAge(p.dob)||'';
   document.getElementById('p-cfg-name').value=p.name||'';document.getElementById('p-cfg-dob').value=p.dob||'';document.getElementById('p-cfg-age').textContent=calcAge(p.dob)||'';
+  const cfgAv=document.getElementById('p-cfg-avatar');
+  if(cfgAv){
+    if(G.patient.profile.photo){cfgAv.innerHTML=`<img src="${G.patient.profile.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;cfgAv.style.background='transparent';}
+    else{cfgAv.textContent=(p.name||'EP').substring(0,2).toUpperCase();cfgAv.style.background='';}
+  }
   buildColorPicker('p-cfg-colors',SC.id,'pickPatColor');
   document.getElementById('p-man-date').value=todayStr();document.getElementById('pm-date').value=todayStr();
   renderPToday();renderPMedList();renderPFileslist();prefillPComp();
+}
+function loadPatientPhoto(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    G.patient.profile.photo=e.target.result;
+    save();
+    // Actualizar todos los avatares
+    const av=document.getElementById('p-avatar');
+    const av2=document.getElementById('p-cfg-avatar');
+    if(av){av.innerHTML=`<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;av.style.background='transparent';}
+    if(av2){av2.innerHTML=`<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;av2.style.background='transparent';}
+    showToast('Foto actualizada ✓');
+  };
+  reader.readAsDataURL(file);
 }
 function savePCfg(){const name=document.getElementById('p-cfg-name').value.trim();if(!name)return;G.patient.profile={name,dob:document.getElementById('p-cfg-dob').value,colorId:SC.id};save();launchPatient();showToast('Perfil guardado ✓');}
 function pTab(t,btn){document.querySelectorAll('#app-patient .section').forEach(s=>s.classList.remove('active'));document.querySelectorAll('#app-patient .tab').forEach(b=>b.classList.remove('active'));document.getElementById('p-sec-'+t).classList.add('active');btn.classList.add('active');if(t==='hist')renderPHistory();if(t==='graf'){pUpdateLabel();renderPCharts();}}
@@ -470,10 +528,126 @@ function pRenderCompare(){const paS=document.getElementById('p-pa-s').value,paE=
 // PATIENT IMPORT/EXPORT
 function parseEvents(rows){let imported=0,skipped=0;const evs=[];rows.forEach(r=>{const date=String(r.fecha||'').trim(),hourRaw=r.hora;if(!date||hourRaw===undefined||hourRaw===''){skipped++;return;}if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){skipped++;return;}const hour=parseInt(hourRaw);if(isNaN(hour)||hour<0||hour>23){skipped++;return;}evs.push({id:Date.now()+Math.random(),date,hour,minute:0,timestamp:new Date(date+'T'+pad(hour)+':00').toISOString()});imported++;});return{evs,imported,skipped};}
 function readFile(file,cb){const reader=new FileReader();reader.onload=e=>{try{let rows=[];if(file.name.toLowerCase().endsWith('.csv')){const lines=e.target.result.split('\n').filter(l=>l.trim()&&!l.startsWith('#'));const hi=lines.findIndex(l=>l.toLowerCase().includes('fecha'));if(hi<0)throw new Error('No se encontró columna "fecha"');const headers=lines[hi].split(',').map(h=>h.trim().toLowerCase());for(let i=hi+1;i<lines.length;i++){const vals=lines[i].split(',');const obj={};headers.forEach((h,j)=>obj[h]=(vals[j]||'').trim());if(obj.fecha)rows.push(obj);}}else{const wb=XLSX.read(e.target.result,{type:'array'});const sn=wb.SheetNames.includes('DATOS')?'DATOS':wb.SheetNames[0];rows=XLSX.utils.sheet_to_json(wb.Sheets[sn],{defval:''});rows=rows.map(r=>Object.fromEntries(Object.entries(r).map(([k,v])=>[k.toLowerCase().trim(),String(v).trim()])));}cb(null,rows);}catch(err){cb(err,null);}};if(file.name.toLowerCase().endsWith('.csv'))reader.readAsText(file);else reader.readAsArrayBuffer(file);}
-function importPatientFile(input){const file=input.files[0];if(!file)return;const res=document.getElementById('p-import-res');readFile(file,(err,rows)=>{if(err){res.className='import-result import-err';res.textContent='Error: '+err.message;res.style.display='block';return;}const{evs,imported,skipped}=parseEvents(rows);G.patient.events.push(...evs);if(!G.patient.importedFiles)G.patient.importedFiles=[];G.patient.importedFiles.push({name:file.name,count:imported,date:todayStr()});save();renderPToday();renderPFileslist();res.className='import-result import-ok';res.textContent=`✓ ${imported} ataques importados${skipped?' · '+skipped+' ignorados':''}`;res.style.display='block';showToast(`${imported} importados ✓`);});input.value='';}
+function importPatientFile(input){
+  const file=input.files[0];if(!file)return;
+  const res=document.getElementById('p-import-res');
+  // Detectar formato .epilepsia
+  if(file.name.toLowerCase().endsWith('.epilepsia')){
+    const reader=new FileReader();
+    reader.onload=e=>{
+      try{
+        const data=JSON.parse(e.target.result);
+        if(data.type!=='epilepsia')throw new Error('Formato no reconocido');
+        // Mostrar diálogo inteligente
+        const nombre=data.paciente||'desconocido';
+        const count=data.events?.length||0;
+        const esNuevoPaciente=!G.patient.profile.name||G.patient.profile.name!==nombre;
+        let msg='';
+        if(esNuevoPaciente){
+          msg=`Datos de: ${nombre} (${count} ataques)
+
+¿Qué querés hacer?`;
+        } else {
+          msg=`Datos de ${nombre} (${count} ataques)
+
+¿Reemplazar los datos actuales o agregar a los existentes?`;
+        }
+        pendingImportData=data;
+        pendingImportFile=file.name;
+        // Mostrar diálogo de importación
+        document.getElementById('import-dlg-msg').textContent=esNuevoPaciente
+          ?`Archivo de: "${nombre}" — ${count} ataques registrados`
+          :`Paciente: "${nombre}" — ${count} ataques`;
+        document.getElementById('import-dlg-sub').textContent=esNuevoPaciente
+          ?'Este archivo es de un paciente diferente al actual. ¿Qué querés hacer?'
+          :'¿Agregás estos datos a los existentes o reemplazás todo?';
+        document.getElementById('import-dlg-new').style.display=esNuevoPaciente?'block':'none';
+        document.getElementById('import-overlay').classList.add('open');
+      }catch(err){res.className='import-result import-err';res.textContent='Error: '+err.message;res.style.display='block';}
+    };
+    reader.readAsText(file);
+  } else {
+    // CSV/Excel clásico
+    readFile(file,(err,rows)=>{
+      if(err){res.className='import-result import-err';res.textContent='Error: '+err.message;res.style.display='block';return;}
+      const{evs,imported,skipped}=parseEvents(rows);
+      G.patient.events.push(...evs);
+      if(!G.patient.importedFiles)G.patient.importedFiles=[];
+      G.patient.importedFiles.push({name:file.name,count:imported,date:todayStr()});
+      save();renderPToday();renderPFileslist();
+      res.className='import-result import-ok';res.textContent=`✓ ${imported} ataques importados${skipped?' · '+skipped+' ignorados':''}`;res.style.display='block';
+      showToast(`${imported} importados ✓`);
+    });
+  }
+  input.value='';
+}
+let pendingImportData=null,pendingImportFile='';
+function confirmImportReplace(){
+  document.getElementById('import-overlay').classList.remove('open');
+  if(!pendingImportData)return;
+  const d=pendingImportData;
+  G.patient.events=d.events||[];
+  if(d.meds?.length)G.patient.meds=d.meds;
+  if(d.paciente)G.patient.profile.name=d.paciente;
+  if(d.dob)G.patient.profile.dob=d.dob;
+  if(!G.patient.importedFiles)G.patient.importedFiles=[];
+  G.patient.importedFiles=[{name:pendingImportFile,count:d.events.length,date:todayStr()}];
+  save();launchPatient();showToast(`${d.events.length} ataques cargados ✓`);pendingImportData=null;
+}
+function confirmImportMerge(){
+  document.getElementById('import-overlay').classList.remove('open');
+  if(!pendingImportData)return;
+  const d=pendingImportData;
+  const existingIds=new Set(G.patient.events.map(e=>e.id));
+  const newEvs=(d.events||[]).filter(e=>!existingIds.has(e.id));
+  G.patient.events.push(...newEvs);
+  if(!G.patient.importedFiles)G.patient.importedFiles=[];
+  G.patient.importedFiles.push({name:pendingImportFile,count:newEvs.length,date:todayStr()});
+  save();renderPToday();renderPFileslist();showToast(`${newEvs.length} ataques nuevos agregados ✓`);pendingImportData=null;
+}
+function confirmImportNewPatient(){
+  // Nuevo paciente: crear perfil fresco con los datos importados
+  document.getElementById('import-overlay').classList.remove('open');
+  if(!pendingImportData)return;
+  const d=pendingImportData;
+  G.patient.events=d.events||[];
+  G.patient.meds=d.meds||[];
+  G.patient.importedFiles=[{name:pendingImportFile,count:d.events.length,date:todayStr()}];
+  G.patient.profile.name=d.paciente||G.patient.profile.name;
+  G.patient.profile.dob=d.dob||G.patient.profile.dob;
+  save();launchPatient();showToast(`Datos de ${d.paciente} cargados ✓`);pendingImportData=null;
+}
 function renderPFileslist(){const el=document.getElementById('p-files-list');if(!el||!G.patient.importedFiles?.length){if(el)el.innerHTML='';return;}el.innerHTML='<div style="margin-top:8px">'+G.patient.importedFiles.map((f,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:var(--bg2);border-radius:var(--rm);margin-bottom:5px;border:0.5px solid var(--bd)"><div><div style="font-size:12px;font-weight:600;color:var(--t1)">📄 ${f.name}</div><div style="font-size:11px;color:var(--t2)">${f.count} ataques · ${f.date}</div></div><button onclick="askDelFile(${i})" style="background:none;border:0.5px solid #E05252;color:#E05252;border-radius:6px;padding:3px 10px;font-size:11px;cursor:pointer">Borrar</button></div>`).join('')+'</div>';}
 function askDelFile(i){const f=G.patient.importedFiles[i];pendingDeleteCb=()=>{if(!G.patient.importedFiles.length)G.patient.events=G.patient.events.filter(e=>Number.isInteger(e.id));G.patient.importedFiles.splice(i,1);save();renderPToday();renderPHistory();renderPFileslist();showToast('Archivo borrado ✓');};document.getElementById('del-msg').textContent=`¿Borrar los ${f.count} ataques de "${f.name}"?`;document.getElementById('delete-overlay').classList.add('open');}
-function exportPatientCSV(){const p=G.patient.profile,age=calcAge(p.dob);const medKeys=G.patient.meds.map(m=>m.name.toLowerCase().replace(/\s+/g,'_').substring(0,10));let csv='# Paciente: '+(p.name||'')+'\n';if(age)csv+='# Edad: '+age+'\n';csv+='fecha,hora,'+medKeys.join(',')+'\n';[...G.patient.events].sort((a,b)=>a.date.localeCompare(b.date)||a.hour-b.hour).forEach(e=>{const mv=G.patient.meds.map(m=>getDoseFor(m,e.date)||'');csv+=e.date+','+e.hour+','+mv.join(',')+'\n';});const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=(p.name||'epilepsia')+'_'+todayStr()+'.csv';a.click();showToast('Descargado ✓');}
+function exportPatientCSV(){const p=G.patient.profile,age=calcAge(p.dob);const medKeys=G.patient.meds.map(m=>m.name.toLowerCase().replace(/\s+/g,'_').substring(0,10));let csv='# Paciente: '+(p.name||'')+'\n';if(age)csv+='# Edad: '+age+'\n';csv+='fecha,hora,'+medKeys.join(',')+'\n';[...G.patient.events].sort((a,b)=>a.date.localeCompare(b.date)||a.hour-b.hour).forEach(e=>{const mv=G.patient.meds.map(m=>getDoseFor(m,e.date)||'');csv+=e.date+','+e.hour+','+mv.join(',')+'\n';});const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));// Formato .epilepsia — JSON con metadatos para reimportar
+  const exportData={version:'2.0',type:'epilepsia',paciente:p.name||'',dob:p.dob||'',exportado:todayStr(),events:G.patient.events,meds:G.patient.meds};
+  const blob=new Blob([JSON.stringify(exportData,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=(p.name||'epilepsia').toLowerCase().replace(/\s+/g,'_')+'_'+todayStr()+'.epilepsia';
+  a.click();showToast('Archivo .epilepsia descargado ✓');}
+function sharePatientData(){
+  const p=G.patient.profile,age=calcAge(p.dob);
+  const exportData={version:'2.0',type:'epilepsia',paciente:p.name||'',dob:p.dob||'',exportado:todayStr(),events:G.patient.events,meds:G.patient.meds};
+  const json=JSON.stringify(exportData);
+  const fname=(p.name||'epilepsia').toLowerCase().replace(/\s+/g,'_')+'_'+todayStr()+'.epilepsia';
+  // Intentar Web Share API (nativo en móvil)
+  if(navigator.share&&navigator.canShare){
+    const blob=new Blob([json],{type:'application/octet-stream'});
+    const file=new File([blob],fname,{type:'application/octet-stream'});
+    if(navigator.canShare({files:[file]})){
+      navigator.share({files:[file],title:'Datos de '+p.name,text:`Historial de ${p.name} — ${G.patient.events.length} ataques registrados`})
+        .then(()=>showToast('Compartido ✓'))
+        .catch(()=>downloadEpilepsiaFile(json,fname));
+      return;
+    }
+  }
+  downloadEpilepsiaFile(json,fname);
+}
+function downloadEpilepsiaFile(json,fname){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([json],{type:'application/octet-stream'}));
+  a.download=fname;a.click();showToast('Archivo descargado ✓');
+}
 function downloadTemplate(){const wb=XLSX.utils.book_new();const inst=[["PLANTILLA","Seguimiento Epilepsia v2"],["",""],["fecha","AAAA-MM-DD  (ej: 2025-12-15)"],["hora","Número 7 a 23"],["kepra","Dosis ese día"],["depakene","Dosis ese día"],["trileptal","Dosis ese día"],["",""],["REGLA","1 fila = 1 ataque"]];const wsI=XLSX.utils.aoa_to_sheet(inst);wsI['!cols']=[{wch:18},{wch:46}];XLSX.utils.book_append_sheet(wb,wsI,"INSTRUCCIONES");const data=[["fecha","hora","kepra","depakene","trileptal","med4","med5","med6"],["2025-12-15",10,500,"","","","",""],["2025-12-15",14,500,"","","","",""]];const wsD=XLSX.utils.aoa_to_sheet(data);wsD['!cols']=[{wch:13},{wch:7},{wch:9},{wch:11},{wch:11},{wch:12},{wch:12},{wch:12}];XLSX.utils.book_append_sheet(wb,wsD,"DATOS");XLSX.writeFile(wb,'plantilla_epilepsia.xlsx');showToast('Plantilla descargada ✓');}
 
 // DOCTOR PROFILE
