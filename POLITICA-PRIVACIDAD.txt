@@ -1,0 +1,58 @@
+POLÍTICA DE PRIVACIDAD — SEGUIMIENTO EPILEPSIA
+==============================================
+
+Última actualización: mayo de 2025
+
+Esta aplicación ("Seguimiento Epilepsia") fue desarrollada para uso
+personal como herramienta de registro médico familiar.
+
+DATOS QUE SE ALMACENAN
+------------------------
+La aplicación almacena en el dispositivo del usuario:
+- Nombre del paciente
+- Fecha de nacimiento
+- Registros de crisis epilépticas (fecha y hora)
+- Dosis de medicamentos registradas por el usuario
+
+DÓNDE SE ALMACENAN LOS DATOS
+------------------------------
+Todos los datos se guardan EXCLUSIVAMENTE en el almacenamiento
+local del dispositivo (localStorage del navegador/app).
+
+NO se transmite ningún dato a servidores externos.
+NO se comparte información con terceros.
+NO se utiliza para fines publicitarios ni comerciales.
+
+EXPORTACIÓN DE DATOS
+---------------------
+El usuario puede exportar sus datos en formato CSV para
+compartirlos con su médico. Esta acción es voluntaria y
+realizada íntegramente por el usuario.
+
+ELIMINACIÓN DE DATOS
+---------------------
+Para eliminar todos los datos almacenados, el usuario puede:
+- Limpiar los datos del sitio en la configuración del navegador, o
+- Desinstalar la aplicación del dispositivo.
+
+MENORES DE EDAD
+----------------
+Esta aplicación está diseñada para ser utilizada por padres o
+tutores en el seguimiento médico de menores. No recopila datos
+de menores de manera directa.
+
+CONTACTO
+---------
+Para consultas sobre esta política de privacidad, contactar a:
+[Reemplazar con tu dirección de email]
+
+==============================================
+INSTRUCCIONES PARA PUBLICAR ESTA POLÍTICA:
+
+1. Ir a https://sites.google.com
+2. Crear un sitio nuevo (gratis)
+3. Copiar el texto de arriba en una página
+4. Publicar el sitio
+5. Copiar la URL y pegarla en Google Play Console
+   en el campo "Política de privacidad"
+==============================================
