@@ -157,14 +157,23 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div id="p-med-list"><div class="empty" style="padding:8px 0">Sin medicamentos</div></div>
       <button class="btn-secondary" style="margin-top:8px" onclick="togglePMedForm()">+ Agregar medicamento</button>
       <div class="add-form" id="p-med-form" style="display:none">
-        <div class="field"><label>Fármaco</label><input type="text" id="pm-name" placeholder="Kepra, Lamictal..." maxlength="25"></div>
-        <div id="pm-doses" style="margin-bottom:7px"></div>
-        <div style="display:flex;gap:7px;align-items:flex-end;margin-bottom:7px">
-          <div class="field" style="flex:1;margin-bottom:0"><label>Desde</label><input type="date" id="pm-date"></div>
-          <div class="field" style="flex:1;margin-bottom:0"><label>Dosis</label><input type="text" id="pm-dose" placeholder="500mg"></div>
-          <button onclick="addPDose()" style="padding:8px 12px;border:none;border-radius:var(--rm);background:var(--cf);color:#fff;font-size:14px;font-weight:700;cursor:pointer;flex-shrink:0">+</button>
+        <div class="field"><label>Nombre del fármaco</label><input type="text" id="pm-name" placeholder="Kepra, Lamictal..." maxlength="25"></div>
+        <!-- Fecha de inicio -->
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <div class="field" style="flex:1;margin-bottom:0"><label>Fecha de inicio</label><input type="date" id="pm-start-date"></div>
+          <div class="field" style="flex:1;margin-bottom:0"><label>Dosis inicial</label><input type="text" id="pm-start-dose" placeholder="Ej: 500mg"></div>
         </div>
-        <button class="btn-primary" onclick="savePMed()">Guardar</button>
+        <!-- Cambios de dosis -->
+        <div style="border-top:0.5px solid var(--bd);padding-top:9px;margin-bottom:8px">
+          <div style="font-size:11px;font-weight:600;color:var(--t2);margin-bottom:8px">CAMBIOS DE DOSIS <span style="font-weight:400;color:var(--t3)">(opcional)</span></div>
+          <div id="pm-doses" style="margin-bottom:8px"></div>
+          <div style="display:flex;gap:7px;align-items:flex-end">
+            <div class="field" style="flex:1;margin-bottom:0"><label>Desde</label><input type="date" id="pm-date"></div>
+            <div class="field" style="flex:1;margin-bottom:0"><label>Nueva dosis</label><input type="text" id="pm-dose" placeholder="Ej: 750mg"></div>
+            <button onclick="addPDose()" style="padding:8px 12px;border:none;border-radius:var(--rm);background:var(--cf);color:#fff;font-size:14px;font-weight:700;cursor:pointer;flex-shrink:0">+</button>
+          </div>
+        </div>
+        <button class="btn-primary" onclick="savePMed()">Guardar medicamento</button>
       </div>
     </div>
     <div class="card" style="border:0.5px solid var(--bd);background:var(--bg2)">
@@ -211,6 +220,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div style="position:relative;width:100%;height:210px"><canvas id="p-main-chart"></canvas></div>
     </div>
     <div class="card"><div class="card-title">Probabilidad de crisis por hora</div><div style="position:relative;width:100%;height:155px"><canvas id="p-prob-chart"></canvas></div></div>
+    <div style="display:flex;justify-content:flex-end;margin-bottom:4px">
+      <button onclick="shareChartsAsImage('p')" style="display:flex;align-items:center;gap:5px;padding:7px 14px;border:0.5px solid var(--bd2);border-radius:20px;background:var(--bg);color:var(--t2);font-size:12px;font-weight:500;cursor:pointer">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+        Compartir como foto
+      </button>
+    </div>
   </div>
   <div id="p-sec-comp" class="section">
     <div class="card"><div class="card-title">Período A</div><div style="display:flex;gap:8px"><div class="field" style="flex:1"><label>Desde</label><input type="date" id="p-pa-s"></div><div class="field" style="flex:1"><label>Hasta</label><input type="date" id="p-pa-e"></div></div></div>
@@ -273,6 +288,29 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <div class="import-result" id="d-import-res"></div>
         <div id="d-file-info" style="display:none;margin-top:8px;padding:8px 10px;background:var(--bg2);border-radius:var(--rm);font-size:12px;color:var(--t2)"></div>
       </div>
+      <!-- Medicamentos del paciente (modo doctor) -->
+      <div class="card">
+        <div class="card-title">Medicamentos del paciente</div>
+        <div id="d-med-list"><div class="empty" style="padding:8px 0">Sin medicamentos</div></div>
+        <button class="btn-secondary" style="margin-top:8px" onclick="toggleDMedForm()">+ Agregar medicamento</button>
+        <div class="add-form" id="d-med-form" style="display:none">
+          <div class="field"><label>Nombre del fármaco</label><input type="text" id="dm-name" placeholder="Kepra, Lamictal..." maxlength="25"></div>
+          <div style="display:flex;gap:8px;margin-bottom:10px">
+            <div class="field" style="flex:1;margin-bottom:0"><label>Fecha de inicio</label><input type="date" id="dm-start-date"></div>
+            <div class="field" style="flex:1;margin-bottom:0"><label>Dosis inicial</label><input type="text" id="dm-start-dose" placeholder="Ej: 500mg"></div>
+          </div>
+          <div style="border-top:0.5px solid var(--bd);padding-top:9px;margin-bottom:8px">
+            <div style="font-size:11px;font-weight:600;color:var(--t2);margin-bottom:8px">CAMBIOS DE DOSIS <span style="font-weight:400;color:var(--t3)">(opcional)</span></div>
+            <div id="dm-doses" style="margin-bottom:8px"></div>
+            <div style="display:flex;gap:7px;align-items:flex-end">
+              <div class="field" style="flex:1;margin-bottom:0"><label>Desde</label><input type="date" id="dm-date"></div>
+              <div class="field" style="flex:1;margin-bottom:0"><label>Nueva dosis</label><input type="text" id="dm-dose" placeholder="Ej: 750mg"></div>
+              <button onclick="addDDose()" style="padding:8px 12px;border:none;border-radius:var(--rm);background:var(--cf);color:#fff;font-size:14px;font-weight:700;cursor:pointer;flex-shrink:0">+</button>
+            </div>
+          </div>
+          <button class="btn-primary" onclick="saveDMed()">Guardar medicamento</button>
+        </div>
+      </div>
       <div class="card" style="padding:11px 14px">
         <div class="card-title">Período</div>
         <div class="ctrl-btns" id="d-range-btns"><button class="ctrl-btn active" onclick="dSetRange('all',this)">Todo</button><button class="ctrl-btn" onclick="dSetRange(15,this)">15d</button><button class="ctrl-btn" onclick="dSetRange(30,this)">30d</button><button class="ctrl-btn" onclick="dSetRange(60,this)">60d</button><button class="ctrl-btn" id="d-libre-btn" onclick="dOpenCustom(this)">Libre</button></div>
@@ -286,6 +324,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       </div>
       <div class="card"><div class="card-title">Crisis diarias + media móvil 7d</div><div class="legend"><span class="leg"><span style="width:10px;height:10px;border-radius:2px;background:#6BAED6;display:inline-block"></span>Crisis/día</span><span class="leg"><span style="width:16px;border-top:2.5px solid #E05252;display:inline-block"></span>Media móvil</span></div><div style="position:relative;width:100%;height:200px"><canvas id="d-main-chart"></canvas></div></div>
       <div class="card"><div class="card-title">Probabilidad de crisis por hora</div><div style="position:relative;width:100%;height:155px"><canvas id="d-prob-chart"></canvas></div></div>
+      <div style="display:flex;justify-content:flex-end;margin-bottom:4px">
+        <button onclick="shareChartsAsImage('d')" style="display:flex;align-items:center;gap:5px;padding:7px 14px;border:0.5px solid var(--bd2);border-radius:20px;background:var(--bg);color:var(--t2);font-size:12px;font-weight:500;cursor:pointer">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+          Compartir como foto
+        </button>
+      </div>
     </div>
   </div>
   <div id="d-sec-compare" class="section">
@@ -426,10 +470,20 @@ function addPEvent(date,hour,minute){G.patient.events.push({id:Date.now()+Math.r
 function renderPToday(){const td=todayStr(),evs=G.patient.events.filter(e=>e.date===td).sort((a,b)=>a.hour-b.hour);document.getElementById('p-badge').textContent=evs.length+' hoy';const list=document.getElementById('p-today-list');if(!evs.length){list.innerHTML='<div class="empty">Sin registros hoy</div>';return;}list.innerHTML=evs.map(e=>`<div class="ev-item"><div><div style="font-size:14px;font-weight:500;color:var(--t1)">${pad(e.hour)}:${pad(e.minute||0)}</div><div style="font-size:11px;color:var(--t2)">Ataque registrado</div></div><button onclick="askDel(${JSON.stringify(e.id)},'ataque de las ${pad(e.hour)}:${pad(e.minute||0)}')" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:22px;line-height:1">×</button></div>`).join('');}
 
 // PATIENT MEDS
-function togglePMedForm(){const f=document.getElementById('p-med-form'),o=f.style.display==='block';f.style.display=o?'none':'block';if(!o){pMedDoses=[];document.getElementById('pm-name').value='';renderPMedDoses();}}
+function togglePMedForm(){const f=document.getElementById('p-med-form'),o=f.style.display==='block';f.style.display=o?'none':'block';if(!o){pMedDoses=[];document.getElementById('pm-name').value='';document.getElementById('pm-start-date').value=todayStr();document.getElementById('pm-start-dose').value='';document.getElementById('pm-dose').value='';renderPMedDoses();}}
 function addPDose(){const d=document.getElementById('pm-date').value,v=document.getElementById('pm-dose').value.trim();if(!d||!v){showToast('Completá fecha y dosis');return;}pMedDoses.push({date:d,val:v});pMedDoses.sort((a,b)=>a.date.localeCompare(b.date));document.getElementById('pm-dose').value='';renderPMedDoses();}
 function renderPMedDoses(){const el=document.getElementById('pm-doses');if(!pMedDoses.length){el.innerHTML='';return;}el.innerHTML=pMedDoses.map((d,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:0.5px solid var(--bd);font-size:12px;color:var(--t1)"><span>Desde ${fmtS(d.date)}: <strong>${d.val}</strong></span><button onclick="pMedDoses.splice(${i},1);renderPMedDoses()" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:15px">×</button></div>`).join('');}
-function savePMed(){const name=document.getElementById('pm-name').value.trim();if(!name||!pMedDoses.length){showToast('Completá nombre y al menos una dosis');return;}G.patient.meds.push({id:Date.now(),name,doses:[...pMedDoses],color:MED_COLORS[G.patient.meds.length%MED_COLORS.length]});save();renderPMedList();document.getElementById('p-med-form').style.display='none';showToast('Medicamento guardado ✓');}
+function savePMed(){
+  const name=document.getElementById('pm-name').value.trim();
+  const startDate=document.getElementById('pm-start-date').value;
+  const startDose=document.getElementById('pm-start-dose').value.trim();
+  if(!name){showToast('Ingresá el nombre del fármaco');return;}
+  if(!startDate||!startDose){showToast('Completá la fecha de inicio y la dosis inicial');return;}
+  // Combinar dosis inicial + cambios posteriores, ordenados por fecha
+  const allDoses=[{date:startDate,val:startDose},...pMedDoses].sort((a,b)=>a.date.localeCompare(b.date));
+  G.patient.meds.push({id:Date.now(),name,doses:allDoses,color:MED_COLORS[G.patient.meds.length%MED_COLORS.length]});
+  save();renderPMedList();document.getElementById('p-med-form').style.display='none';showToast('Medicamento guardado ✓');
+}
 function getDoseFor(med,date){const s=[...med.doses].sort((a,b)=>a.date.localeCompare(b.date));let c=null;for(const d of s){if(d.date<=date)c=d.val;}return c;}
 function renderPMedList(){const td=todayStr(),list=document.getElementById('p-med-list');if(!G.patient.meds.length){list.innerHTML='<div class="empty" style="padding:8px 0">Sin medicamentos</div>';return;}list.innerHTML=G.patient.meds.map(m=>{const dose=getDoseFor(m,td);return`<div style="background:var(--bg2);border:0.5px solid var(--bd);border-radius:var(--rm);padding:10px 12px;margin-bottom:7px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px"><span><span style="width:8px;height:8px;border-radius:50%;background:${m.color};display:inline-block;margin-right:5px;vertical-align:middle"></span><strong style="font-size:13px;color:var(--t1)">${m.name}</strong></span><span style="font-size:12px;font-weight:600;padding:2px 8px;border-radius:12px;background:var(--cl);color:var(--ct)">${dose||'—'}</span></div><div style="font-size:11px;color:var(--t2)">${m.doses.map(d=>`desde ${fmtS(d.date)}: ${d.val}`).join(' → ')}<button onclick="G.patient.meds=G.patient.meds.filter(x=>x.id!==${m.id});save();renderPMedList()" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:11px;margin-left:7px">Eliminar</button></div></div>`;}).join('');}
 
@@ -606,16 +660,22 @@ function confirmImportMerge(){
   save();renderPToday();renderPFileslist();showToast(`${newEvs.length} ataques nuevos agregados ✓`);pendingImportData=null;
 }
 function confirmImportNewPatient(){
-  // Nuevo paciente: crear perfil fresco con los datos importados
   document.getElementById('import-overlay').classList.remove('open');
   if(!pendingImportData)return;
   const d=pendingImportData;
-  G.patient.events=d.events||[];
-  G.patient.meds=d.meds||[];
-  G.patient.importedFiles=[{name:pendingImportFile,count:d.events.length,date:todayStr()}];
-  G.patient.profile.name=d.paciente||G.patient.profile.name;
-  G.patient.profile.dob=d.dob||G.patient.profile.dob;
-  save();launchPatient();showToast(`Datos de ${d.paciente} cargados ✓`);pendingImportData=null;
+  if(G.role==='doctor'){
+    // Crear nuevo paciente en modo doctor
+    const pat={id:Date.now(),name:d.paciente||'Nuevo paciente',dob:d.dob||'',diag:'',events:d.events||[],meds:d.meds||[],fileInfo:{name:pendingImportFile,count:d.events?.length||0,date:todayStr()},color:PAT_COLORS[G.doctor.patients.length%PAT_COLORS.length]};
+    G.doctor.patients.push(pat);
+    activeDoctorPatId=pat.id;
+    save();renderDPatList();renderDView();showToast(`Paciente "${pat.name}" creado ✓`);
+  } else {
+    G.patient.events=d.events||[];G.patient.meds=d.meds||[];
+    G.patient.importedFiles=[{name:pendingImportFile,count:d.events.length,date:todayStr()}];
+    G.patient.profile.name=d.paciente||G.patient.profile.name;G.patient.profile.dob=d.dob||G.patient.profile.dob;
+    save();launchPatient();showToast(`Datos de ${d.paciente} cargados ✓`);
+  }
+  pendingImportData=null;
 }
 function renderPFileslist(){const el=document.getElementById('p-files-list');if(!el||!G.patient.importedFiles?.length){if(el)el.innerHTML='';return;}el.innerHTML='<div style="margin-top:8px">'+G.patient.importedFiles.map((f,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:var(--bg2);border-radius:var(--rm);margin-bottom:5px;border:0.5px solid var(--bd)"><div><div style="font-size:12px;font-weight:600;color:var(--t1)">📄 ${f.name}</div><div style="font-size:11px;color:var(--t2)">${f.count} ataques · ${f.date}</div></div><button onclick="askDelFile(${i})" style="background:none;border:0.5px solid #E05252;color:#E05252;border-radius:6px;padding:3px 10px;font-size:11px;cursor:pointer">Borrar</button></div>`).join('')+'</div>';}
 function askDelFile(i){const f=G.patient.importedFiles[i];pendingDeleteCb=()=>{if(!G.patient.importedFiles.length)G.patient.events=G.patient.events.filter(e=>Number.isInteger(e.id));G.patient.importedFiles.splice(i,1);save();renderPToday();renderPHistory();renderPFileslist();showToast('Archivo borrado ✓');};document.getElementById('del-msg').textContent=`¿Borrar los ${f.count} ataques de "${f.name}"?`;document.getElementById('delete-overlay').classList.add('open');}
@@ -625,6 +685,46 @@ function exportPatientCSV(){const p=G.patient.profile,age=calcAge(p.dob);const m
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
   a.download=(p.name||'epilepsia').toLowerCase().replace(/\s+/g,'_')+'_'+todayStr()+'.epilepsia';
   a.click();showToast('Archivo .epilepsia descargado ✓');}
+async function shareChartsAsImage(mode){
+  // Captura los dos canvas del modo activo en una sola imagen
+  const mainId=mode==='p'?'p-main-chart':'d-main-chart';
+  const probId=mode==='p'?'p-prob-chart':'d-prob-chart';
+  const c1=document.getElementById(mainId);
+  const c2=document.getElementById(probId);
+  if(!c1||!c2){showToast('Generá los gráficos primero');return;}
+  // Crear canvas combinado
+  const combined=document.createElement('canvas');
+  const margin=16,gap=12,titleH=28;
+  combined.width=c1.width;
+  combined.height=titleH+c1.height+gap+c2.height+margin*2;
+  const ctx=combined.getContext('2d');
+  // Fondo
+  const isDark=matchMedia('(prefers-color-scheme:dark)').matches;
+  ctx.fillStyle=isDark?'#1c1c1e':'#f7f9fc';
+  ctx.fillRect(0,0,combined.width,combined.height);
+  // Título
+  const patName=mode==='p'?G.patient.profile.name:getActivePat()?.name||'';
+  ctx.fillStyle=isDark?'#f0f0f0':'#2C3E50';
+  ctx.font='bold 13px -apple-system,sans-serif';
+  ctx.textAlign='center';
+  ctx.fillText(`${patName} — Seguimiento Epilepsia`,combined.width/2,margin+12);
+  // Gráficos
+  ctx.drawImage(c1,0,titleH+margin);
+  ctx.drawImage(c2,0,titleH+margin+c1.height+gap);
+  // Exportar
+  combined.toBlob(async blob=>{
+    const fname=(patName||'epilepsia').toLowerCase().replace(/\s+/g,'_')+'_graficas.png';
+    if(navigator.share&&navigator.canShare){
+      const file=new File([blob],fname,{type:'image/png'});
+      if(navigator.canShare({files:[file]})){
+        try{await navigator.share({files:[file],title:'Gráficas de '+patName,text:'Historial de crisis epilépticas'});showToast('Compartido ✓');return;}catch(e){}
+      }
+    }
+    // Fallback: descarga
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fname;a.click();
+    showToast('Imagen descargada ✓');
+  },'image/png',0.95);
+}
 function sharePatientData(){
   const p=G.patient.profile,age=calcAge(p.dob);
   const exportData={version:'2.0',type:'epilepsia',paciente:p.name||'',dob:p.dob||'',exportado:todayStr(),events:G.patient.events,meds:G.patient.meds};
@@ -658,6 +758,52 @@ function saveDCfg(){const name=document.getElementById('d-cfg-name').value.trim(
 function dTab(t,btn){document.querySelectorAll('#app-doctor .section').forEach(s=>s.classList.remove('active'));document.querySelectorAll('#app-doctor .tab').forEach(b=>b.classList.remove('active'));document.getElementById('d-sec-'+t).classList.add('active');btn.classList.add('active');if(t==='view')renderDView();if(t==='compare')renderDCompareSlots();}
 
 // DOCTOR PATIENTS
+let dMedDoses=[];
+function toggleDMedForm(){
+  const pat=getActivePat();if(!pat)return;
+  const f=document.getElementById('d-med-form'),o=f.style.display==='block';
+  f.style.display=o?'none':'block';
+  if(!o){dMedDoses=[];document.getElementById('dm-name').value='';document.getElementById('dm-start-date').value=todayStr();document.getElementById('dm-start-dose').value='';document.getElementById('dm-dose').value='';renderDMedDoses();}
+}
+function addDDose(){
+  const d=document.getElementById('dm-date').value,v=document.getElementById('dm-dose').value.trim();
+  if(!d||!v){showToast('Completá fecha y dosis');return;}
+  dMedDoses.push({date:d,val:v});dMedDoses.sort((a,b)=>a.date.localeCompare(b.date));
+  document.getElementById('dm-dose').value='';renderDMedDoses();
+}
+function renderDMedDoses(){
+  const el=document.getElementById('dm-doses');if(!el)return;
+  if(!dMedDoses.length){el.innerHTML='';return;}
+  el.innerHTML=dMedDoses.map((d,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:0.5px solid var(--bd);font-size:12px;color:var(--t1)"><span>Desde ${fmtS(d.date)}: <strong>${d.val}</strong></span><button onclick="dMedDoses.splice(${i},1);renderDMedDoses()" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:15px">×</button></div>`).join('');
+}
+function saveDMed(){
+  const pat=getActivePat();if(!pat)return;
+  const name=document.getElementById('dm-name').value.trim();
+  const startDate=document.getElementById('dm-start-date').value;
+  const startDose=document.getElementById('dm-start-dose').value.trim();
+  if(!name){showToast('Ingresá el nombre del fármaco');return;}
+  if(!startDate||!startDose){showToast('Completá la fecha de inicio y la dosis inicial');return;}
+  const allDoses=[{date:startDate,val:startDose},...dMedDoses].sort((a,b)=>a.date.localeCompare(b.date));
+  if(!pat.meds)pat.meds=[];
+  pat.meds.push({id:Date.now(),name,doses:allDoses,color:MED_COLORS[pat.meds.length%MED_COLORS.length]});
+  save();renderDMedList();document.getElementById('d-med-form').style.display='none';showToast('Medicamento guardado ✓');
+}
+function renderDMedList(){
+  const pat=getActivePat();
+  const list=document.getElementById('d-med-list');if(!list)return;
+  if(!pat||!pat.meds?.length){list.innerHTML='<div class="empty" style="padding:8px 0">Sin medicamentos</div>';return;}
+  const td=todayStr();
+  list.innerHTML=pat.meds.map(m=>{
+    const dose=getDoseFor(m,td);
+    return`<div style="background:var(--bg2);border:0.5px solid var(--bd);border-radius:var(--rm);padding:10px 12px;margin-bottom:7px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+        <span><span style="width:8px;height:8px;border-radius:50%;background:${m.color};display:inline-block;margin-right:5px;vertical-align:middle"></span><strong style="font-size:13px;color:var(--t1)">${m.name}</strong></span>
+        <span style="font-size:12px;font-weight:600;padding:2px 8px;border-radius:12px;background:var(--cl);color:var(--ct)">${dose||'—'}</span>
+      </div>
+      <div style="font-size:11px;color:var(--t2)">${m.doses.map(d=>`desde ${fmtS(d.date)}: ${d.val}`).join(' → ')}<button onclick="const p=getActivePat();if(p){p.meds=p.meds.filter(x=>x.id!==${m.id});save();renderDMedList();}" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:11px;margin-left:7px">Eliminar</button></div>
+    </div>`;
+  }).join('');
+}
 function toggleAddPatForm(){const f=document.getElementById('d-add-pat-form'),o=f.style.display==='block';f.style.display=o?'none':'block';if(!o){document.getElementById('np-name').value='';document.getElementById('np-dob').value='';document.getElementById('np-diag').value='';document.getElementById('np-age').textContent='';}}
 function addPatient(){const name=document.getElementById('np-name').value.trim();if(!name){showToast('Ingresá el nombre');return;}const pat={id:Date.now(),name,dob:document.getElementById('np-dob').value,diag:document.getElementById('np-diag').value.trim(),events:[],fileInfo:null,color:PAT_COLORS[G.doctor.patients.length%PAT_COLORS.length]};G.doctor.patients.push(pat);save();renderDPatList();renderDCompareSlots();document.getElementById('d-add-pat-form').style.display='none';showToast('Paciente agregado ✓');}
 function renderDPatList(){const list=document.getElementById('d-pat-list');if(!G.doctor.patients.length){list.innerHTML='<div class="empty">Sin pacientes agregados</div>';return;}list.innerHTML=G.doctor.patients.map(p=>`<div class="pat-card${activeDoctorPatId===p.id?' active-pat':''}" onclick="selectDPat(${p.id})"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div><div style="font-size:15px;font-weight:600;color:${activeDoctorPatId===p.id?'var(--ct)':'var(--t1)'}"><span style="width:9px;height:9px;border-radius:50%;background:${p.color};display:inline-block;margin-right:6px;vertical-align:middle"></span>${p.name}</div><div style="font-size:11px;color:var(--t2);margin-top:2px">${p.dob?calcAge(p.dob)+' · ':''}${p.diag||'Sin diagnóstico'}</div>${p.fileInfo?`<div style="font-size:11px;color:var(--t3);margin-top:2px">📄 ${p.fileInfo.name} · ${p.fileInfo.count} ataques</div>`:'<div style="font-size:11px;color:var(--t3);margin-top:2px">Sin datos cargados</div>'}</div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px">${p.events.length?`<span style="font-size:11px;padding:2px 8px;border-radius:12px;background:var(--cl);color:var(--ct);font-weight:600">${p.events.length}</span>`:''}<button onclick="event.stopPropagation();askDelPat(${p.id})" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:11px">Eliminar</button></div></div></div>`).join('');}
@@ -666,7 +812,7 @@ function askDelPat(id){const p=G.doctor.patients.find(x=>x.id===id);if(!p)return
 function getActivePat(){return G.doctor.patients.find(p=>p.id===activeDoctorPatId)||null;}
 
 // DOCTOR VIEW
-function renderDView(){const pat=getActivePat();document.getElementById('d-no-pat').style.display=pat?'none':'block';document.getElementById('d-pat-view').style.display=pat?'block':'none';if(!pat)return;document.getElementById('d-pat-badge').textContent=pat.name;document.getElementById('d-pat-info-card').innerHTML=`<div class="card-title">Paciente activo</div><div style="display:flex;align-items:center;gap:10px"><span style="width:36px;height:36px;border-radius:50%;background:${pat.color}22;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:${pat.color}">${pat.name.substring(0,2).toUpperCase()}</span><div><div style="font-size:15px;font-weight:600;color:var(--t1)">${pat.name}</div><div style="font-size:12px;color:var(--t2)">${pat.dob?calcAge(pat.dob)+' · ':''}${pat.diag||'Sin diagnóstico'}</div></div></div>`;if(pat.fileInfo){document.getElementById('d-file-info').style.display='block';document.getElementById('d-file-info').textContent=`📄 ${pat.fileInfo.name} · ${pat.fileInfo.count} ataques · cargado ${pat.fileInfo.date}`;}else{document.getElementById('d-file-info').style.display='none';}dUpdateStats(pat);dUpdateLabel();renderDCharts();}
+function renderDView(){const pat=getActivePat();document.getElementById('d-no-pat').style.display=pat?'none':'block';document.getElementById('d-pat-view').style.display=pat?'block':'none';if(!pat)return;document.getElementById('d-pat-badge').textContent=pat.name;document.getElementById('d-pat-info-card').innerHTML=`<div class="card-title">Paciente activo</div><div style="display:flex;align-items:center;gap:10px"><span style="width:36px;height:36px;border-radius:50%;background:${pat.color}22;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:${pat.color}">${pat.name.substring(0,2).toUpperCase()}</span><div><div style="font-size:15px;font-weight:600;color:var(--t1)">${pat.name}</div><div style="font-size:12px;color:var(--t2)">${pat.dob?calcAge(pat.dob)+' · ':''}${pat.diag||'Sin diagnóstico'}</div></div></div>`;if(pat.fileInfo){document.getElementById('d-file-info').style.display='block';document.getElementById('d-file-info').textContent=`📄 ${pat.fileInfo.name} · ${pat.fileInfo.count} ataques · cargado ${pat.fileInfo.date}`;}else{document.getElementById('d-file-info').style.display='none';}dUpdateStats(pat);dUpdateLabel();renderDCharts();renderDMedList();}
 function dUpdateStats(pat){if(!pat){['d-st-total','d-st-avg','d-st-best','d-st-worst'].forEach(id=>document.getElementById(id).textContent='—');return;}const bd={};pat.events.forEach(e=>{bd[e.date]=(bd[e.date]||0)+1;});document.getElementById('d-st-total').textContent=pat.events.length;if(Object.keys(bd).length){const vals=Object.values(bd);document.getElementById('d-st-avg').textContent=(vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1);const all=Object.keys(bd);document.getElementById('d-st-best').textContent=bd[all.reduce((a,b)=>bd[a]<bd[b]?a:b)];document.getElementById('d-st-worst').textContent=bd[all.reduce((a,b)=>bd[a]>bd[b]?a:b)];}}
 function dGetDates(pat){if(!pat||!pat.events.length)return[];const s=[...pat.events].map(e=>e.date).sort();const first=s[0],last=s[s.length-1],end=last>todayStr()?last:todayStr();if(dRange==='all')return buildBetween(first,end);const e2=new Date(end);e2.setDate(e2.getDate()-(dRange-1));return buildBetween(e2.getFullYear()+'-'+pad(e2.getMonth()+1)+'-'+pad(e2.getDate()),end);}
 function dUpdateLabel(){const pat=getActivePat();const dates=dGetDates(pat);if(!dates.length){document.getElementById('d-range-label').textContent='';return;}document.getElementById('d-range-label').textContent=`${fmtS(dates[0])} ${dates[0].split('-')[0]} → ${fmtS(dates[dates.length-1])} · ${dates.length} días`;}
@@ -681,7 +827,53 @@ function renderDCharts(){const pat=getActivePat();if(!pat||!pat.events.length)re
 }
 
 // DOCTOR IMPORT
-function importDoctorFile(input){const file=input.files[0];if(!file)return;const pat=getActivePat();if(!pat){showToast('Seleccioná un paciente primero');input.value='';return;}const res=document.getElementById('d-import-res');readFile(file,(err,rows)=>{if(err){res.className='import-result import-err';res.textContent='Error: '+err.message;res.style.display='block';return;}const{evs,imported,skipped}=parseEvents(rows);pat.events=evs;pat.fileInfo={name:file.name,count:imported,date:todayStr()};save();renderDPatList();renderDView();res.className='import-result import-ok';res.textContent=`✓ ${imported} ataques cargados${skipped?' · '+skipped+' ignorados':''}`;res.style.display='block';showToast(`${imported} ataques cargados ✓`);});input.value='';}
+function importDoctorFile(input){
+  const file=input.files[0];if(!file)return;
+  const res=document.getElementById('d-import-res');
+  // Detectar .epilepsia
+  if(file.name.toLowerCase().endsWith('.epilepsia')){
+    const reader=new FileReader();
+    reader.onload=e=>{
+      try{
+        const data=JSON.parse(e.target.result);
+        if(data.type!=='epilepsia')throw new Error('Formato no reconocido');
+        pendingImportData=data;pendingImportFile=file.name;
+        // Buscar si ya existe el paciente
+        const nombre=data.paciente||'';
+        const existing=G.doctor.patients.find(p=>p.name.toLowerCase()===nombre.toLowerCase());
+        if(existing){
+          // Paciente ya existe → preguntar reemplazar o agregar
+          document.getElementById('import-dlg-msg').textContent=`Datos de: "${nombre}" — ${data.events?.length||0} ataques`;
+          document.getElementById('import-dlg-sub').textContent=`El paciente ya está registrado. ¿Reemplazás sus datos o agregás los nuevos?`;
+          document.getElementById('import-dlg-new').style.display='none';
+          document.getElementById('import-dlg-replace-fn').dataset.patId=existing.id;
+          document.getElementById('import-overlay').classList.add('open');
+          pendingImportPatId=existing.id;
+        } else {
+          // Paciente nuevo → ofrecer crearlo
+          document.getElementById('import-dlg-msg').textContent=`Datos de: "${nombre||'nuevo paciente'}" — ${data.events?.length||0} ataques`;
+          document.getElementById('import-dlg-sub').textContent=`"${nombre}" no está en tu lista. ¿Creás el paciente o asignás a uno existente?`;
+          document.getElementById('import-dlg-new').style.display='block';
+          document.getElementById('import-overlay').classList.add('open');
+          pendingImportPatId=null;
+        }
+      }catch(err){res.className='import-result import-err';res.textContent='Error: '+err.message;res.style.display='block';}
+    };reader.readAsText(file);
+  } else {
+    // CSV/Excel
+    const pat=getActivePat();if(!pat){showToast('Seleccioná un paciente primero');input.value='';return;}
+    readFile(file,(err,rows)=>{
+      if(err){res.className='import-result import-err';res.textContent='Error: '+err.message;res.style.display='block';return;}
+      const{evs,imported,skipped}=parseEvents(rows);
+      pat.events=evs;pat.fileInfo={name:file.name,count:imported,date:todayStr()};
+      save();renderDPatList();renderDView();
+      res.className='import-result import-ok';res.textContent=`✓ ${imported} ataques cargados${skipped?' · '+skipped+' ignorados':''}`;res.style.display='block';
+      showToast(`${imported} ataques cargados ✓`);
+    });
+  }
+  input.value='';
+}
+let pendingImportPatId=null;
 
 // DOCTOR COMPARE
 function renderDCompareSlots(){const el=document.getElementById('d-compare-slots');if(!G.doctor.patients.length){el.innerHTML='<div class="empty">Agregá pacientes primero</div>';return;}G.doctor.patients.forEach(p=>{const s=[...p.events].map(e=>e.date).sort();if(!dCompRanges[p.id]&&s.length)dCompRanges[p.id]={start:s[0],end:s[s.length-1]};});el.innerHTML=G.doctor.patients.map(p=>{const cr=dCompRanges[p.id]||{};return`<div class="card" style="margin-bottom:10px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="width:10px;height:10px;border-radius:50%;background:${p.color};display:inline-block;flex-shrink:0"></span><span style="font-size:13px;font-weight:600;color:var(--t1)">${p.name}</span>${p.events.length?`<span style="font-size:11px;color:var(--t3)">${p.events.length} ataques</span>`:'<span style="font-size:11px;color:var(--t3)">Sin datos</span>'}</div><div style="display:flex;gap:8px"><div class="field" style="flex:1;margin-bottom:0"><label>Desde</label><input type="date" value="${cr.start||''}" onchange="if(!dCompRanges[${p.id}])dCompRanges[${p.id}]={};dCompRanges[${p.id}].start=this.value"></div><div class="field" style="flex:1;margin-bottom:0"><label>Hasta</label><input type="date" value="${cr.end||''}" onchange="if(!dCompRanges[${p.id}])dCompRanges[${p.id}]={};dCompRanges[${p.id}].end=this.value"></div></div></div>`;}).join('');}
