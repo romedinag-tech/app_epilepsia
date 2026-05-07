@@ -127,6 +127,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <div style="font-size:11px;color:var(--t2);margin-top:2px">.xlsx · .csv</div>
       </div>
       <div class="import-result" id="import-result-reg"></div>
+      <div id="imported-files-list"></div>
     </div>
     <div class="card">
       <div class="card-title">Medicamentos activos</div>
@@ -172,7 +173,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="stat"><div class="lbl">Mejor día</div><div class="val" id="st-best">—</div><div class="sub">menos ataques</div></div>
       <div class="stat"><div class="lbl">Peor día</div><div class="val" id="st-worst">—</div><div class="sub">más ataques</div></div>
     </div>
-    <div class="card"><div class="card-title">Últimos 14 días</div><div id="hist-list"><div class="empty">Sin datos aún</div></div></div>
+    <div class="card"><div class="card-title">Últimos 14 días <span style="font-size:10px;font-weight:400;color:var(--t3)">— tocá una fecha para ver y borrar ataques</span></div><div id="hist-list"><div class="empty">Sin datos aún</div></div></div>
     <button class="btn-soft" onclick="exportCSV()"><span>📤</span> Enviar al médico (CSV)</button>
     <p style="font-size:11px;color:var(--t3);text-align:center;margin-top:5px;margin-bottom:11px">Adjuntalo por correo o WhatsApp</p>
   </div>
@@ -195,6 +196,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <span class="leg"><span class="leg-sq" id="leg-bar"></span>Crisis/día</span>
         <span class="leg"><span style="width:16px;border-top:2.5px solid #E05252;display:inline-block"></span>Media móvil 7d</span>
       </div>
+      <div id="med-toggles" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:9px"></div>
       <div style="position:relative;width:100%;height:210px"><canvas id="mainChart"></canvas></div>
     </div>
     <div class="card">
@@ -261,6 +263,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="dbtn-row"><button class="dbtn-cancel" onclick="closeConfirm()">Cancelar</button><button class="dbtn-ok" onclick="confirmAttack()">Confirmar</button></div>
   </div>
 </div>
+<div class="overlay" id="delete-overlay">
+  <div class="dialog">
+    <h3>Borrar ataque</h3>
+    <p id="delete-msg">¿Estás seguro que querés borrar este ataque?</p>
+    <div class="dbtn-row">
+      <button class="dbtn-cancel" onclick="document.getElementById('delete-overlay').classList.remove('open')">Cancelar</button>
+      <button class="dbtn-ok" style="background:#E05252" onclick="confirmDelete()">Borrar</button>
+    </div>
+  </div>
+</div>
 <div class="overlay" id="custom-overlay">
   <div class="dialog">
     <h3>Rango personalizado</h3>
@@ -302,8 +314,12 @@ function save(){try{localStorage.setItem(SK,JSON.stringify(D));}catch(e){}}
 
 function getActiveDates(){
   if(!D.events.length)return[];
-  if(curRange==='all'){const s=[...D.events].map(e=>e.date).sort();return buildDatesBetween(s[0],todayStr());}
-  return buildDateRange(curRange);
+  const allDates=[...D.events].map(e=>e.date).sort();
+  const firstEv=allDates[0], lastEv=allDates[allDates.length-1];
+  const end=lastEv>todayStr()?lastEv:todayStr();
+  if(curRange==='all')return buildDatesBetween(firstEv,end);
+  const s=new Date(end);s.setDate(s.getDate()-(curRange-1));
+  return buildDatesBetween(s.getFullYear()+'-'+pad(s.getMonth()+1)+'-'+pad(s.getDate()),end);
 }
 function buildDateRange(n){
   const end=new Date(),start=new Date();start.setDate(start.getDate()-(n-1));
@@ -341,7 +357,7 @@ function applyTheme(){
 function previewAge(d,a){document.getElementById(a).textContent=calcAge(document.getElementById(d).value)||'La edad se calculará automáticamente';}
 function saveProfile(){const name=document.getElementById('s-name').value.trim();if(!name){document.getElementById('s-name').focus();return;}D.profile={name,dob:document.getElementById('s-dob').value,colorId:SC.id};save();launch();}
 function saveProfileCfg(){const name=document.getElementById('p-name').value.trim();if(!name)return;D.profile={name,dob:document.getElementById('p-dob').value,colorId:SC.id};save();applyProfile();showToast('Perfil guardado ✓');}
-function launch(){document.getElementById('setup').style.display='none';document.getElementById('mainapp').style.display='block';document.getElementById('man-date').value=todayStr();document.getElementById('new-dose-date').value=todayStr();applyProfile();renderToday();renderMedList();prefillCompare();}
+function launch(){document.getElementById('setup').style.display='none';document.getElementById('mainapp').style.display='block';document.getElementById('man-date').value=todayStr();document.getElementById('new-dose-date').value=todayStr();applyProfile();renderToday();renderMedList();prefillCompare();renderImportedFiles();}
 function applyProfile(){const p=D.profile;SC=getC(p.colorId||'sky');document.getElementById('t-avatar').textContent=(p.name||'EP').substring(0,2).toUpperCase();document.getElementById('t-name').textContent=p.name||'Seguimiento';document.getElementById('t-age').textContent=calcAge(p.dob)||'';document.getElementById('p-name').value=p.name||'';document.getElementById('p-dob').value=p.dob||'';document.getElementById('p-age').textContent=calcAge(p.dob)||'';buildColorPicker('p-colors',SC.id);applyTheme();}
 function prefillCompare(){if(!D.events.length)return;const sorted=[...D.events].sort((a,b)=>a.date.localeCompare(b.date));const first=sorted[0].date,last=sorted[sorted.length-1].date;const mid=buildDatesBetween(first,last);const half=mid[Math.floor(mid.length/2)];document.getElementById('pa-start').value=first;document.getElementById('pa-end').value=half;document.getElementById('pb-start').value=half;document.getElementById('pb-end').value=last;}
 function showTab(t,btn){document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));document.getElementById('sec-'+t).classList.add('active');btn.classList.add('active');if(t==='hist')renderHistory();if(t==='graf'){updateRangeLabel();renderCharts();}}
@@ -361,18 +377,123 @@ function saveMed(){const name=document.getElementById('new-med-name').value.trim
 function deleteMed(id){D.meds=D.meds.filter(m=>m.id!==id);save();renderMedList();}
 function getDoseForDate(med,date){const s=[...med.doses].sort((a,b)=>a.date.localeCompare(b.date));let c=null;for(const d of s){if(d.date<=date)c=d.val;}return c;}
 function renderMedList(){const td=todayStr(),list=document.getElementById('med-active-list');if(!D.meds.length){list.innerHTML='<div class="empty" style="padding:8px 0">Sin medicamentos cargados</div>';return;}list.innerHTML=D.meds.map(m=>{const dose=getDoseForDate(m,td);return`<div class="med-card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><span><span style="width:8px;height:8px;border-radius:50%;background:${m.color};display:inline-block;margin-right:5px;vertical-align:middle"></span><strong style="font-size:13px;color:var(--t1)">${m.name}</strong></span><span style="font-size:12px;font-weight:600;padding:2px 8px;border-radius:12px;background:var(--cl);color:var(--ct)">${dose||'—'}</span></div><div style="font-size:11px;color:var(--t2)">${m.doses.map(d=>`desde ${fmtShort(d.date)}: ${d.val}`).join(' → ')}<button onclick="deleteMed(${m.id})" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:11px;margin-left:7px">Eliminar</button></div></div>`;}).join('');}
-function renderHistory(){const bd={};D.events.forEach(e=>{bd[e.date]=(bd[e.date]||0)+1;});const days=Object.keys(bd).sort((a,b)=>b.localeCompare(a)).slice(0,14);document.getElementById('st-total').textContent=D.events.length;if(days.length){const vals=Object.values(bd);document.getElementById('st-avg').textContent=(vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1);const all=Object.keys(bd);document.getElementById('st-best').textContent=bd[all.reduce((a,b)=>bd[a]<bd[b]?a:b)];document.getElementById('st-worst').textContent=bd[all.reduce((a,b)=>bd[a]>bd[b]?a:b)];}const list=document.getElementById('hist-list');if(!days.length){list.innerHTML='<div class="empty">Sin datos aún</div>';return;}list.innerHTML=days.map(d=>{const meds=D.meds.map(m=>{const dose=getDoseForDate(m,d);return dose?`${m.name.substring(0,5)}: ${dose}`:null;}).filter(Boolean).join(' · ');return`<div class="ev-item"><div><div class="ev-main">${fmtShort(d)} ${d.split('-')[0]}</div><div class="ev-sub">${meds||'Sin medicación'}</div></div><div class="ev-count">${bd[d]}</div></div>`;}).join('');}
+function renderHistory(){
+  const bd={};D.events.forEach(e=>{bd[e.date]=(bd[e.date]||0)+1;});
+  const days=Object.keys(bd).sort((a,b)=>b.localeCompare(a)).slice(0,14);
+  document.getElementById('st-total').textContent=D.events.length;
+  if(days.length){const vals=Object.values(bd);document.getElementById('st-avg').textContent=(vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1);const all=Object.keys(bd);document.getElementById('st-best').textContent=bd[all.reduce((a,b)=>bd[a]<bd[b]?a:b)];document.getElementById('st-worst').textContent=bd[all.reduce((a,b)=>bd[a]>bd[b]?a:b)];}
+  const list=document.getElementById('hist-list');
+  if(!days.length){list.innerHTML='<div class="empty">Sin datos aún</div>';return;}
+  list.innerHTML=days.map(d=>{
+    const cnt=bd[d];
+    const meds=D.meds.map(m=>{const dose=getDoseForDate(m,d);return dose?`${m.name.substring(0,5)}: ${dose}`:null;}).filter(Boolean).join(' · ');
+    const evs=D.events.filter(e=>e.date===d).sort((a,b)=>a.hour-b.hour||a.minute-b.minute);
+    const expandId='exp-'+d.replace(/-/g,'');
+    return`<div class="ev-item" style="flex-direction:column;align-items:stretch;padding:10px 0">
+      <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="toggleDay('${expandId}')">
+        <div><div class="ev-main">${fmtShort(d)} ${d.split('-')[0]}</div><div class="ev-sub">${meds||'Sin medicación'}</div></div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="ev-count">${cnt}</span>
+          <span style="font-size:16px;color:var(--t3)" id="arr-${expandId}">▸</span>
+        </div>
+      </div>
+      <div id="${expandId}" style="display:none;margin-top:8px;background:var(--bg2);border-radius:var(--rm);padding:8px 10px">
+        ${evs.map(e=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:0.5px solid var(--bd)">
+          <span style="font-size:13px;color:var(--t1)">🕐 ${pad(e.hour)}:${pad(e.minute||0)} hs</span>
+          <button onclick="askDeleteEvent(${JSON.stringify(e.id)},'${pad(e.hour)}:${pad(e.minute||0)}','${d}')" style="background:none;border:0.5px solid #E05252;color:#E05252;border-radius:6px;padding:3px 10px;font-size:11px;cursor:pointer">Borrar</button>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+function toggleDay(id){
+  const el=document.getElementById(id),arr=document.getElementById('arr-'+id);
+  const open=el.style.display==='block';
+  el.style.display=open?'none':'block';
+  arr.textContent=open?'▸':'▾';
+}
+let pendingDeleteId=null;
+function askDeleteEvent(id,hora,fecha){
+  pendingDeleteId=id;
+  document.getElementById('delete-msg').textContent=`¿Borrar el ataque de las ${hora} del ${fecha}? Esta acción no se puede deshacer.`;
+  document.getElementById('delete-overlay').classList.add('open');
+}
+function confirmDelete(){
+  const overlay=document.getElementById('delete-overlay');
+  const mode=overlay.dataset.mode;
+  overlay.classList.remove('open');
+  overlay.dataset.mode='';
+  if(mode==='file'){
+    if(pendingFileIdx===null)return;
+    // No podemos saber exactamente qué eventos vienen de cada archivo
+    // así que borramos TODOS los eventos y pedimos reimportar
+    // Alternativa: guardar IDs por archivo
+    const f=D.importedFiles[pendingFileIdx];
+    // Borrar el registro del archivo y todos los eventos (reset completo de events importados)
+    D.importedFiles.splice(pendingFileIdx,1);
+    // Si no quedan archivos importados borramos todos los eventos importados (id decimal = importados)
+    // Identificamos importados por id decimal (Math.random genera decimal)
+    if(!D.importedFiles.length){D.events=D.events.filter(e=>Number.isInteger(e.id));}
+    pendingFileIdx=null;
+    save();renderToday();renderHistory();renderImportedFiles();showToast('Archivo borrado ✓');
+  } else {
+    if(pendingDeleteId===null)return;
+    D.events=D.events.filter(e=>e.id!==pendingDeleteId);
+    pendingDeleteId=null;
+    save();renderToday();renderHistory();showToast('Ataque borrado');
+  }
+}
 function setRange(n,btn){curRange=n;document.querySelectorAll('#range-btns .ctrl-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');updateRangeLabel();renderCharts();}
 function openCustomRange(btn){customRangeBtn=btn;document.getElementById('custom-days').value='';document.getElementById('custom-overlay').classList.add('open');}
 function applyCustomRange(){const n=parseInt(document.getElementById('custom-days').value);if(!n||n<1){showToast('Ingresá un número válido');return;}document.getElementById('custom-overlay').classList.remove('open');curRange=n;document.querySelectorAll('#range-btns .ctrl-btn').forEach(b=>b.classList.remove('active'));if(customRangeBtn){customRangeBtn.classList.add('active');customRangeBtn.textContent=n+'d';}updateRangeLabel();renderCharts();}
 function updateRangeLabel(){const dates=getActiveDates();if(!dates.length){document.getElementById('range-label').textContent='';return;}document.getElementById('range-label').textContent=`${fmtShort(dates[0])} ${dates[0].split('-')[0]} → ${fmtShort(dates[dates.length-1])} ${dates[dates.length-1].split('-')[0]} · ${dates.length} días`;}
 function renderCharts(){renderMainChart();renderProbChart();}
+function buildMedToggles(){
+  const el=document.getElementById('med-toggles');if(!el||!D.meds.length){if(el)el.innerHTML='';return;}
+  if(!D.medVisible)D.medVisible={};
+  D.meds.forEach(m=>{if(D.medVisible[m.id]===undefined)D.medVisible[m.id]=true;});
+  el.innerHTML=D.meds.map(m=>`
+    <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:3px 8px;border-radius:20px;border:0.5px solid ${D.medVisible[m.id]?m.color:'var(--bd2)'};background:${D.medVisible[m.id]?m.color+'22':'transparent'};font-size:11px;color:${D.medVisible[m.id]?m.color:'var(--t3)'};font-weight:500;transition:all .15s">
+      <input type="checkbox" ${D.medVisible[m.id]?'checked':''} onchange="toggleMed(${m.id},this.checked)" style="display:none">
+      <span style="width:7px;height:7px;border-radius:50%;background:${m.color};display:inline-block;flex-shrink:0"></span>
+      ${m.name}
+    </label>`).join('');
+}
+function toggleMed(id,val){
+  if(!D.medVisible)D.medVisible={};
+  D.medVisible[id]=val;
+  renderMainChart();
+}
 function renderMainChart(){
+  buildMedToggles();
   const dates=getActiveDates(),bd={};D.events.forEach(e=>{bd[e.date]=(bd[e.date]||0)+1;});
   const counts=dates.map(d=>bd[d]||0),avg7=movAvg(counts,7),many=dates.length>40;
   const isDark=matchMedia('(prefers-color-scheme:dark)').matches,tc=isDark?'rgba(255,255,255,0.38)':'rgba(44,62,80,0.38)',gc=isDark?'rgba(255,255,255,0.05)':'rgba(0,0,0,0.05)';
+  // Datasets de medicamentos visibles
+  const MED_DASH=[[],[5,3],[2,2],[4,2,1,2],[6,2],[3,3]];
+  const medDatasets=(D.meds||[]).filter(m=>D.medVisible&&D.medVisible[m.id]).map((m,i)=>{
+    const data=dates.map(d=>getDoseForDate(m,d)?parseFloat(getDoseForDate(m,d))||null:null);
+    return{type:'line',label:m.name,data,borderColor:m.color,borderWidth:1.5,pointRadius:0,tension:0.3,yAxisID:'y2',spanGaps:true,order:1,borderDash:MED_DASH[i%MED_DASH.length]};
+  });
+  const mxM=medDatasets.length?Math.max(...medDatasets.flatMap(ds=>ds.data.filter(v=>v!=null)),1):1;
+  const scales={
+    x:{ticks:{color:tc,font:{size:9},maxRotation:45,autoSkip:true,maxTicksLimit:many?12:20},grid:{color:gc,lineWidth:0.5}},
+    y:{ticks:{color:tc,font:{size:9},precision:0,stepSize:1},grid:{color:gc,lineWidth:0.5},min:0},
+  };
+  if(medDatasets.length)scales.y2={position:'right',ticks:{color:tc,font:{size:9},callback:v=>v},grid:{drawOnChartArea:false},min:0,max:mxM*1.4};
   if(cMain)cMain.destroy();
-  cMain=new Chart(document.getElementById('mainChart'),{type:'bar',data:{labels:dates.map(d=>fmtShort(d)),datasets:[{type:'bar',label:'Crisis',data:counts,backgroundColor:SC.barA,borderColor:SC.bar,borderWidth:0.5,borderRadius:3,order:2},{type:'line',label:'Media móvil 7d',data:avg7,borderColor:'#E05252',borderWidth:2,pointRadius:0,tension:0.4,fill:false,order:1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{title:ctx=>dates[ctx[0].dataIndex]}}},scales:{x:{ticks:{color:tc,font:{size:9},maxRotation:45,autoSkip:true,maxTicksLimit:many?12:20},grid:{color:gc,lineWidth:0.5}},y:{ticks:{color:tc,font:{size:9},precision:0,stepSize:1},grid:{color:gc,lineWidth:0.5},min:0}}}});
+  cMain=new Chart(document.getElementById('mainChart'),{
+    type:'bar',
+    data:{labels:dates.map(d=>fmtShort(d)),datasets:[
+      {type:'bar',label:'Crisis',data:counts,backgroundColor:SC.barA,borderColor:SC.bar,borderWidth:0.5,borderRadius:3,yAxisID:'y',order:2},
+      {type:'line',label:'Media móvil 7d',data:avg7,borderColor:'#E05252',borderWidth:2,pointRadius:0,tension:0.4,fill:false,yAxisID:'y',order:1},
+      ...medDatasets
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{title:ctx=>dates[ctx[0].dataIndex]}}},
+      scales
+    }
+  });
 }
 function renderProbChart(){
   const dates=getActiveDates(),probs=smooth(calcHourProb(dates),1),hours=Array.from({length:17},(_,i)=>i+7);
@@ -399,7 +520,33 @@ function renderCompare(){
 }
 function exportCSV(){const bd={};D.events.forEach(e=>{if(!bd[e.date])bd[e.date]={total:0,hours:Array(17).fill(0)};bd[e.date].total++;if(e.hour>=7&&e.hour<=23)bd[e.date].hours[e.hour-7]++;});const hrs=Array.from({length:17},(_,i)=>i+7),p=D.profile,age=calcAge(p.dob);let csv=`Paciente: ${p.name||''}\n`;if(age)csv+=`Edad: ${age}\n`;const mH=D.meds.map(m=>m.name);csv+='\nFecha,Total,'+mH.join(',')+','+hrs.join(',')+'\n';Object.keys(bd).sort().forEach(d=>{const mv=D.meds.map(m=>getDoseForDate(m,d)||'');csv+=`${d},${bd[d].total},${mv.join(',')},${bd[d].hours.join(',')}\n`;});const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=(p.name||'epilepsia')+'_'+todayStr()+'.csv';a.click();showToast('Archivo descargado ✓');}
 function downloadTemplate(){const wb=XLSX.utils.book_new();const inst=[["PLANTILLA DE CARGA","Seguimiento Epilepsia"],["",""],["COLUMNAS OBLIGATORIAS",""],["fecha","Formato AAAA-MM-DD  (ej: 2026-12-15)"],["hora","Número entero de 7 a 23"],["",""],["COLUMNAS OPCIONALES",""],["kepra","Dosis ese día"],["depakene","Dosis ese día"],["trileptal","Dosis ese día"],["med4","Extra 1"],["med5","Extra 2"],["med6","Extra 3"],["",""],["REGLA","1 fila = 1 ataque. Si hay 2 ataques el mismo día → 2 filas con la misma fecha"]];const wsI=XLSX.utils.aoa_to_sheet(inst);wsI['!cols']=[{wch:20},{wch:50}];XLSX.utils.book_append_sheet(wb,wsI,"INSTRUCCIONES");const data=[["fecha","hora","kepra","depakene","trileptal","med4","med5","med6"],["2026-12-15",10,500,"","","","",""],["2026-12-15",14,500,"","","","",""],["2026-12-16",9,500,"","","","",""]];const wsD=XLSX.utils.aoa_to_sheet(data);wsD['!cols']=[{wch:14},{wch:7},{wch:9},{wch:11},{wch:11},{wch:13},{wch:13},{wch:13}];XLSX.utils.book_append_sheet(wb,wsD,"DATOS");XLSX.writeFile(wb,'plantilla_epilepsia.xlsx');showToast('Plantilla descargada ✓');}
-function importFile(input){const file=input.files[0];if(!file)return;const resId=input.id==='xl-input-reg'?'import-result-reg':'import-result-perf';const res=document.getElementById(resId);if(res)res.style.display='none';const reader=new FileReader();reader.onload=function(e){try{let rows=[];if(file.name.toLowerCase().endsWith('.csv')){const lines=e.target.result.split('\n').filter(l=>l.trim());const hi=lines.findIndex(l=>l.toLowerCase().includes('fecha'));if(hi<0)throw new Error('No se encontró columna "fecha"');const headers=lines[hi].split(',').map(h=>h.trim().toLowerCase());for(let i=hi+1;i<lines.length;i++){const vals=lines[i].split(',');const obj={};headers.forEach((h,j)=>obj[h]=(vals[j]||'').trim());if(obj.fecha)rows.push(obj);}}else{const wb=XLSX.read(e.target.result,{type:'array'});const sn=wb.SheetNames.includes('DATOS')?'DATOS':wb.SheetNames[0];rows=XLSX.utils.sheet_to_json(wb.Sheets[sn],{defval:''});rows=rows.map(r=>Object.fromEntries(Object.entries(r).map(([k,v])=>[k.toLowerCase().trim(),String(v).trim()])));}let imported=0,skipped=0;rows.forEach(r=>{const date=String(r.fecha||'').trim(),hourRaw=r.hora;if(!date||hourRaw===undefined||hourRaw===''){skipped++;return;}if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){skipped++;return;}const hour=parseInt(hourRaw);if(isNaN(hour)||hour<0||hour>23){skipped++;return;}D.events.push({id:Date.now()+Math.random(),date,hour,minute:0,timestamp:new Date(date+'T'+pad(hour)+':00').toISOString()});imported++;});save();renderToday();prefillCompare();if(res){res.className='import-result import-ok';res.textContent=`✓ ${imported} ataques importados${skipped?' · '+skipped+' ignorados':''}`;res.style.display='block';}showToast(`${imported} registros importados ✓`);}catch(err){if(res){res.className='import-result import-err';res.textContent='Error: '+err.message;res.style.display='block';}}};if(file.name.toLowerCase().endsWith('.csv'))reader.readAsText(file);else reader.readAsArrayBuffer(file);input.value='';}
+function importFile(input){const file=input.files[0];if(!file)return;const resId=input.id==='xl-input-reg'?'import-result-reg':'import-result-perf';const res=document.getElementById(resId);if(res)res.style.display='none';const reader=new FileReader();reader.onload=function(e){try{let rows=[];if(file.name.toLowerCase().endsWith('.csv')){const lines=e.target.result.split('\n').filter(l=>l.trim());const hi=lines.findIndex(l=>l.toLowerCase().includes('fecha'));if(hi<0)throw new Error('No se encontró columna "fecha"');const headers=lines[hi].split(',').map(h=>h.trim().toLowerCase());for(let i=hi+1;i<lines.length;i++){const vals=lines[i].split(',');const obj={};headers.forEach((h,j)=>obj[h]=(vals[j]||'').trim());if(obj.fecha)rows.push(obj);}}else{const wb=XLSX.read(e.target.result,{type:'array'});const sn=wb.SheetNames.includes('DATOS')?'DATOS':wb.SheetNames[0];rows=XLSX.utils.sheet_to_json(wb.Sheets[sn],{defval:''});rows=rows.map(r=>Object.fromEntries(Object.entries(r).map(([k,v])=>[k.toLowerCase().trim(),String(v).trim()])));}let imported=0,skipped=0;rows.forEach(r=>{const date=String(r.fecha||'').trim(),hourRaw=r.hora;if(!date||hourRaw===undefined||hourRaw===''){skipped++;return;}if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){skipped++;return;}const hour=parseInt(hourRaw);if(isNaN(hour)||hour<0||hour>23){skipped++;return;}D.events.push({id:Date.now()+Math.random(),date,hour,minute:0,timestamp:new Date(date+'T'+pad(hour)+':00').toISOString()});imported++;});save();renderToday();prefillCompare();if(res){res.className='import-result import-ok';res.textContent=`✓ ${imported} ataques importados${skipped?' · '+skipped+' ignorados':''}`;res.style.display='block';}showToast(`${imported} registros importados ✓`);
+      // Registrar archivo cargado
+      if(!D.importedFiles)D.importedFiles=[];
+      D.importedFiles.push({name:file.name,count:imported,date:todayStr()});
+      save();renderImportedFiles();
+    }catch(err){if(res){res.className='import-result import-err';res.textContent='Error: '+err.message;res.style.display='block';}}};if(file.name.toLowerCase().endsWith('.csv'))reader.readAsText(file);else reader.readAsArrayBuffer(file);input.value='';}
+function renderImportedFiles(){
+  const el=document.getElementById('imported-files-list');if(!el)return;
+  if(!D.importedFiles||!D.importedFiles.length){el.innerHTML='';return;}
+  el.innerHTML='<div style="margin-top:8px">'+D.importedFiles.map((f,i)=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:var(--bg2);border-radius:var(--rm);margin-bottom:5px;border:0.5px solid var(--bd)">
+      <div>
+        <div style="font-size:12px;font-weight:600;color:var(--t1)">📄 ${f.name}</div>
+        <div style="font-size:11px;color:var(--t2)">${f.count} ataques · ${f.date}</div>
+      </div>
+      <button onclick="askDeleteFile(${i})" style="background:none;border:0.5px solid #E05252;color:#E05252;border-radius:6px;padding:3px 10px;font-size:11px;cursor:pointer">Borrar</button>
+    </div>`).join('')+'</div>';
+}
+let pendingFileIdx=null;
+function askDeleteFile(idx){
+  pendingFileIdx=idx;
+  const f=D.importedFiles[idx];
+  document.getElementById('delete-msg').textContent=`¿Borrar todos los ${f.count} ataques importados desde "${f.name}"? Esta acción no se puede deshacer.`;
+  document.getElementById('delete-overlay').classList.add('open');
+  // Override confirmDelete for this case
+  document.getElementById('delete-overlay').dataset.mode='file';
+}
 
 async function init(){
   load();buildColorPicker('s-colors','sky');
