@@ -95,7 +95,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <body>
 
 <!-- LOADING -->
-<div id="loading-screen" style="position:fixed;top:0;left:0;right:0;bottom:0;background:var(--bg3);z-index:400;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px">
+<div id="loading-screen" style="position:fixed;top:0;left:0;right:0;bottom:0;background:var(--bg3);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px">
   <svg width="48" height="38" viewBox="0 0 28 22" fill="none" xmlns="http://www.w3.org/2000/svg">
     <polyline points="0,11 4,11 6,3 8,19 10,7 12,14 14,11 18,11" stroke="#4A90D9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
     <circle cx="22" cy="11" r="5" stroke="#4A90D9" stroke-width="2" fill="none"/>
@@ -105,7 +105,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div style="font-size:13px;color:var(--t2)">Cargando...</div>
 </div>
 <!-- ROLE -->
-<div class="role-screen" id="role-screen" style="display:flex">
+<div class="role-screen" id="role-screen" style="display:none">
   <div class="role-box">
     <h2>Bienvenidos 👋</h2>
     <p class="sub">¿Cómo vas a usar esta aplicación?</p>
@@ -689,12 +689,17 @@ function confirmImportNewPatient(){
 }
 function renderPFileslist(){const el=document.getElementById('p-files-list');if(!el||!G.patient.importedFiles?.length){if(el)el.innerHTML='';return;}el.innerHTML='<div style="margin-top:8px">'+G.patient.importedFiles.map((f,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:var(--bg2);border-radius:var(--rm);margin-bottom:5px;border:0.5px solid var(--bd)"><div><div style="font-size:12px;font-weight:600;color:var(--t1)">📄 ${f.name}</div><div style="font-size:11px;color:var(--t2)">${f.count} ataques · ${f.date}</div></div><button onclick="askDelFile(${i})" style="background:none;border:0.5px solid #E05252;color:#E05252;border-radius:6px;padding:3px 10px;font-size:11px;cursor:pointer">Borrar</button></div>`).join('')+'</div>';}
 function askDelFile(i){const f=G.patient.importedFiles[i];pendingDeleteCb=()=>{if(!G.patient.importedFiles.length)G.patient.events=G.patient.events.filter(e=>Number.isInteger(e.id));G.patient.importedFiles.splice(i,1);save();renderPToday();renderPHistory();renderPFileslist();showToast('Archivo borrado ✓');};document.getElementById('del-msg').textContent=`¿Borrar los ${f.count} ataques de "${f.name}"?`;document.getElementById('delete-overlay').classList.add('open');}
-function exportPatientCSV(){const p=G.patient.profile,age=calcAge(p.dob);const medKeys=G.patient.meds.map(m=>m.name.toLowerCase().replace(/\s+/g,'_').substring(0,10));let csv='# Paciente: '+(p.name||'')+'\n';if(age)csv+='# Edad: '+age+'\n';csv+='fecha,hora,'+medKeys.join(',')+'\n';[...G.patient.events].sort((a,b)=>a.date.localeCompare(b.date)||a.hour-b.hour).forEach(e=>{const mv=G.patient.meds.map(m=>getDoseFor(m,e.date)||'');csv+=e.date+','+e.hour+','+mv.join(',')+'\n';});const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));// Formato .epilepsia — JSON con metadatos para reimportar
+function exportPatientCSV(){
+  const p=G.patient.profile,age=calcAge(p.dob);
+  // Exportar como .epilepsia (formato propio reimportable)
   const exportData={version:'2.0',type:'epilepsia',paciente:p.name||'',dob:p.dob||'',exportado:todayStr(),events:G.patient.events,meds:G.patient.meds};
-  const blob=new Blob([JSON.stringify(exportData,null,2)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  a.download=(p.name||'epilepsia').toLowerCase().replace(/\s+/g,'_')+'_'+todayStr()+'.epilepsia';
-  a.click();showToast('Archivo .epilepsia descargado ✓');}
+  const blob=new Blob([JSON.stringify(exportData)],{type:'application/octet-stream'});
+  const lnk=document.createElement('a');
+  lnk.href=URL.createObjectURL(blob);
+  lnk.download=(p.name||'epilepsia').toLowerCase().replace(/\s+/g,'_')+'_'+todayStr()+'.epilepsia';
+  lnk.click();
+  showToast('Archivo .epilepsia descargado ✓');
+}
 async function shareChartsAsImage(mode){
   // Captura los dos canvas del modo activo en una sola imagen
   const mainId=mode==='p'?'p-main-chart':'d-main-chart';
@@ -731,7 +736,7 @@ async function shareChartsAsImage(mode){
       }
     }
     // Fallback: descarga
-    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fname;a.click();
+    const aImg=document.createElement('a');aImg.href=URL.createObjectURL(blob);aImg.download=fname;aImg.click();
     showToast('Imagen descargada ✓');
   },'image/png',0.95);
 }
@@ -754,9 +759,9 @@ function sharePatientData(){
   downloadEpilepsiaFile(json,fname);
 }
 function downloadEpilepsiaFile(json,fname){
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([json],{type:'application/octet-stream'}));
-  a.download=fname;a.click();showToast('Archivo descargado ✓');
+  const aDown=document.createElement('a');
+  aDown.href=URL.createObjectURL(new Blob([json],{type:'application/octet-stream'}));
+  aDown.download=fname;aDown.click();showToast('Archivo descargado ✓');
 }
 function downloadTemplate(){const wb=XLSX.utils.book_new();const inst=[["PLANTILLA","Seguimiento Epilepsia v2"],["",""],["fecha","AAAA-MM-DD  (ej: 2025-12-15)"],["hora","Número 7 a 23"],["kepra","Dosis ese día"],["depakene","Dosis ese día"],["trileptal","Dosis ese día"],["",""],["REGLA","1 fila = 1 ataque"]];const wsI=XLSX.utils.aoa_to_sheet(inst);wsI['!cols']=[{wch:18},{wch:46}];XLSX.utils.book_append_sheet(wb,wsI,"INSTRUCCIONES");const data=[["fecha","hora","kepra","depakene","trileptal","med4","med5","med6"],["2025-12-15",10,500,"","","","",""],["2025-12-15",14,500,"","","","",""]];const wsD=XLSX.utils.aoa_to_sheet(data);wsD['!cols']=[{wch:13},{wch:7},{wch:9},{wch:11},{wch:11},{wch:12},{wch:12},{wch:12}];XLSX.utils.book_append_sheet(wb,wsD,"DATOS");XLSX.writeFile(wb,'plantilla_epilepsia.xlsx');showToast('Plantilla descargada ✓');}
 
@@ -897,14 +902,12 @@ async function init(){
     load();
     buildColorPicker('s-colors','sky','pickPatColor');
     buildColorPicker('d-colors','slate','pickDocColor');
-    // Ocultar loading
+    // Ocultar loading siempre
     const ls=document.getElementById('loading-screen');if(ls)ls.style.display='none';
     if(!G.role){
       document.getElementById('role-screen').style.display='flex';
       return;
     }
-    // Ocultar role-screen si ya hay rol
-    document.getElementById('role-screen').style.display='none';
     if(G.role==='patient'){
       if(G.patient.profile?.name)launchPatient();
       else{document.getElementById('setup-patient').style.display='flex';buildColorPicker('s-colors','sky','pickPatColor');}
@@ -914,11 +917,30 @@ async function init(){
     }
   } catch(err){
     console.error('Init error:',err);
-    const ls=document.getElementById('loading-screen');if(ls)ls.style.display='none';
-    document.getElementById('role-screen').style.display='flex';
+    const ls=document.getElementById('loading-screen');
+    if(ls){
+      ls.innerHTML=`<div style="padding:24px;max-width:340px;text-align:center">
+        <div style="font-size:32px;margin-bottom:12px">⚠️</div>
+        <div style="font-size:15px;font-weight:600;color:#2C3E50;margin-bottom:8px">Error al iniciar</div>
+        <div style="font-size:12px;color:#E05252;background:#FFEBEE;padding:10px;border-radius:8px;word-break:break-all;text-align:left;margin-bottom:16px">${err.message||err.toString()}</div>
+        <button onclick="localStorage.clear();location.reload()" style="padding:10px 20px;border:none;border-radius:8px;background:#4A90D9;color:#fff;font-size:14px;font-weight:600;cursor:pointer">Reiniciar app</button>
+      </div>`;
+    }
   }
 }
-init();
+// Esperar que Chart.js y XLSX carguen antes de init()
+function waitAndInit(){
+  if(typeof Chart !== 'undefined' && typeof XLSX !== 'undefined'){
+    init();
+  } else {
+    setTimeout(waitAndInit, 100);
+  }
+}
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded', waitAndInit);
+} else {
+  waitAndInit();
+}
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 </script>
 </body>
