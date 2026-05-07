@@ -94,8 +94,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </head>
 <body>
 
+<!-- LOADING -->
+<div id="loading-screen" style="position:fixed;top:0;left:0;right:0;bottom:0;background:var(--bg3);z-index:400;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px">
+  <svg width="48" height="38" viewBox="0 0 28 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <polyline points="0,11 4,11 6,3 8,19 10,7 12,14 14,11 18,11" stroke="#4A90D9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <circle cx="22" cy="11" r="5" stroke="#4A90D9" stroke-width="2" fill="none"/>
+    <line x1="22" y1="8" x2="22" y2="14" stroke="#4A90D9" stroke-width="2" stroke-linecap="round"/>
+    <line x1="19" y1="11" x2="25" y2="11" stroke="#4A90D9" stroke-width="2" stroke-linecap="round"/>
+  </svg>
+  <div style="font-size:13px;color:var(--t2)">Cargando...</div>
+</div>
 <!-- ROLE -->
-<div class="role-screen" id="role-screen" style="display:none">
+<div class="role-screen" id="role-screen" style="display:flex">
   <div class="role-box">
     <h2>Bienvenidos 👋</h2>
     <p class="sub">¿Cómo vas a usar esta aplicación?</p>
@@ -883,13 +893,30 @@ function renderDoctorCompare(){const pats=G.doctor.patients.filter(p=>p.events.l
   }),'dCompProb');document.getElementById('d-comp-summary').innerHTML=pats.map((p,i)=>{const dates=allDates[i];const evs=p.events.filter(e=>e.date>=dCompRanges[p.id].start&&e.date<=dCompRanges[p.id].end);const prob=smooth(calcProb(p.events,dates),1);const peak=hours[prob.indexOf(Math.max(...prob))];return`<strong style="color:${p.color}">${p.name}:</strong> ${evs.length} ataques · ${(evs.length/dates.length).toFixed(1)}/día · pico ${peak}:00`;}).join('<br>');}
 
 async function init(){
-  load();
-  buildColorPicker('s-colors','sky','pickPatColor');
-  buildColorPicker('d-colors','slate','pickDocColor');
-  if(window.storage){try{const r=await window.storage.get(SK,true);if(r&&r.value){const rem=JSON.parse(r.value);if(!G.role&&rem.role)G.role=rem.role;if(!G.patient.events.length&&rem.patient?.events?.length)G.patient=rem.patient;if(!G.doctor.patients.length&&rem.doctor?.patients?.length)G.doctor=rem.doctor;if(!G.patient.medVisible)G.patient.medVisible={};if(!G.patient.importedFiles)G.patient.importedFiles=[];save();}}catch(e){}}
-  if(!G.role){document.getElementById('role-screen').style.display='flex';return;}
-  if(G.role==='patient'){if(G.patient.profile?.name)launchPatient();else{document.getElementById('setup-patient').style.display='flex';buildColorPicker('s-colors','sky','pickPatColor');}}
-  else{if(G.doctor.profile?.name)launchDoctor();else{document.getElementById('setup-doctor').style.display='flex';buildColorPicker('d-colors','slate','pickDocColor');}}
+  try{
+    load();
+    buildColorPicker('s-colors','sky','pickPatColor');
+    buildColorPicker('d-colors','slate','pickDocColor');
+    // Ocultar loading
+    const ls=document.getElementById('loading-screen');if(ls)ls.style.display='none';
+    if(!G.role){
+      document.getElementById('role-screen').style.display='flex';
+      return;
+    }
+    // Ocultar role-screen si ya hay rol
+    document.getElementById('role-screen').style.display='none';
+    if(G.role==='patient'){
+      if(G.patient.profile?.name)launchPatient();
+      else{document.getElementById('setup-patient').style.display='flex';buildColorPicker('s-colors','sky','pickPatColor');}
+    } else {
+      if(G.doctor.profile?.name)launchDoctor();
+      else{document.getElementById('setup-doctor').style.display='flex';buildColorPicker('d-colors','slate','pickDocColor');}
+    }
+  } catch(err){
+    console.error('Init error:',err);
+    const ls=document.getElementById('loading-screen');if(ls)ls.style.display='none';
+    document.getElementById('role-screen').style.display='flex';
+  }
 }
 init();
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
