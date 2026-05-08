@@ -1645,13 +1645,14 @@ function clearFacuDoctor() {
 }
 
 
+
 // ════════════════════════════════════════════════════════════
-// FARMACOLOGÍA — Motor analítico
+// FARMACOLOGÍA — Motor analítico v2
 // ════════════════════════════════════════════════════════════
 const PHARMA_DB = {
-  Kepra:    {conc:100, hl:7,   tmax:1.3, interval:12, lo:20, hi:60, dosing:[8,20],  color:'#1565C0'},
-  Depakene: {conc:50,  hl:13,  tmax:2.0, interval:8,  lo:15, hi:60, dosing:[8,16,0],color:'#C62828'},
-  Trileptal:{conc:60,  hl:9,   tmax:3.0, interval:12, lo:8,  hi:46, dosing:[8,20],  color:'#2E7D32'},
+  Kepra:    {conc:100, hl:7,   tmax:1.3, interval:12, lo:20, hi:60, dosing:[8,20],   color:'#1565C0'},
+  Depakene: {conc:50,  hl:13,  tmax:2.0, interval:8,  lo:15, hi:60, dosing:[8,16,0], color:'#C62828'},
+  Trileptal:{conc:60,  hl:9,   tmax:3.0, interval:12, lo:8,  hi:46, dosing:[8,20],   color:'#2E7D32'},
 };
 const LAG_VALS = [0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0];
 
@@ -1664,192 +1665,185 @@ function pharmaClassify(drug, ml, pesoKg) {
   return 'Ter';
 }
 
-function pharmaGetRange(dayRec, pesoKg) {
-  const meds = dayRec.meds || {};
-  const ck = pharmaClassify('Kepra',    meds.kepra    || 0, pesoKg);
-  const cd = pharmaClassify('Depakene', meds.depakene || 0, pesoKg);
-  const ct = pharmaClassify('Trileptal',meds.trileptal|| 0, pesoKg);
-  if (ck==='Sub' && !cd && !ct) return {rn:1, label:'Kepra Sub-terapéutico', color:'#FFF3E0', drugs:['Kepra']};
-  if (ck==='Ter' && !cd && !ct) return {rn:2, label:'Kepra Terapéutico',     color:'#E3F2FD', drugs:['Kepra']};
-  if (ck && cd && !ct)          return {rn:3, label:'Kepra + Depakene',       color:'#E8F5E9', drugs:['Kepra','Depakene']};
-  if (!ck && cd && ct==='Sub')  return {rn:4, label:'Depakene + Trileptal Sub',color:'#F3E5F5',drugs:['Depakene','Trileptal']};
-  if (!ck && cd && ct==='Ter')  return {rn:5, label:'Depakene + Trileptal Ter (control)',color:'#E0F7FA',drugs:['Depakene','Trileptal']};
+function pharmaGetRange(meds, pesoKg) {
+  const ck = pharmaClassify('Kepra',    meds.kepra    ||0, pesoKg);
+  const cd = pharmaClassify('Depakene', meds.depakene ||0, pesoKg);
+  const ct = pharmaClassify('Trileptal',meds.trileptal||0, pesoKg);
+  if (ck==='Sub' && !cd && !ct) return {rn:1, label:'Kepra Sub-terapéutico',              color:'#FFF3E0', drugs:['Kepra']};
+  if (ck==='Ter' && !cd && !ct) return {rn:2, label:'Kepra Terapéutico',                  color:'#E3F2FD', drugs:['Kepra']};
+  if (ck      && cd     && !ct) return {rn:3, label:'Kepra + Depakene',                   color:'#E8F5E9', drugs:['Kepra','Depakene']};
+  if (!ck && cd && ct==='Sub')  return {rn:4, label:'Depakene + Trileptal Sub',            color:'#F3E5F5', drugs:['Depakene','Trileptal']};
+  if (!ck && cd && ct==='Ter')  return {rn:5, label:'Depakene + Trileptal Ter (control)', color:'#E0F7FA', drugs:['Depakene','Trileptal']};
   return null;
 }
 
+// Curva plasmática normalizada de UN fármaco (24h)
 function pharmaPlasma24h(drug) {
   const p = PHARMA_DB[drug];
   const ke = Math.log(2)/p.hl, ka = Math.log(2)/(p.tmax/2.5);
   const cp = new Array(24).fill(0);
   for (let h=0; h<24; h++) {
-    let c = 0;
+    let c=0;
     for (const hd of p.dosing) {
       for (let cyc=-4; cyc<=1; cyc++) {
-        const dt = h - (hd + cyc*p.interval);
-        if (dt > 0) c += Math.max(0, Math.exp(-ke*dt) - Math.exp(-ka*dt));
+        const dt = h-(hd+cyc*p.interval);
+        if (dt>0) c += Math.max(0, Math.exp(-ke*dt)-Math.exp(-ka*dt));
       }
     }
-    cp[h] = c;
+    cp[h]=c;
   }
-  const mx = Math.max(...cp);
-  return mx > 0 ? cp.map(v=>v/mx) : cp;
+  const mx=Math.max(...cp);
+  return mx>0 ? cp.map(v=>v/mx) : cp;
+}
+
+// Curva COMBINADA: suma de curvas normalizadas de cada fármaco activo
+function pharmaCombinedPlasma(drugs) {
+  if (drugs.length===1) return pharmaPlasma24h(drugs[0]);
+  const curves = drugs.map(d => pharmaPlasma24h(d));
+  const combined = new Array(24).fill(0);
+  for (let h=0; h<24; h++) curves.forEach(c => combined[h]+=c[h]);
+  const mx = Math.max(...combined);
+  return mx>0 ? combined.map(v=>v/mx) : combined;
 }
 
 function pharmaPearson(a, b) {
-  const n = a.length;
-  if (n < 3) return {r:0, p:1};
-  const ma = a.reduce((s,v)=>s+v,0)/n, mb = b.reduce((s,v)=>s+v,0)/n;
-  let num=0, da2=0, db2=0;
-  for (let i=0; i<n; i++) { const da=a[i]-ma, db=b[i]-mb; num+=da*db; da2+=da*da; db2+=db*db; }
-  const r = (da2>0&&db2>0) ? num/Math.sqrt(da2*db2) : 0;
-  const t = Math.abs(r)*Math.sqrt((n-2)/(1-r*r+1e-10));
-  const p = Math.min(1, 2*Math.exp(-0.717*t - 0.416*t*t));
+  const n=a.length;
+  if (n<3) return {r:0,p:1};
+  const ma=a.reduce((s,v)=>s+v,0)/n, mb=b.reduce((s,v)=>s+v,0)/n;
+  let num=0,da2=0,db2=0;
+  for (let i=0;i<n;i++){const da=a[i]-ma,db=b[i]-mb;num+=da*db;da2+=da*da;db2+=db*db;}
+  const r=(da2>0&&db2>0)?num/Math.sqrt(da2*db2):0;
+  const t=Math.abs(r)*Math.sqrt((n-2)/(1-r*r+1e-10));
+  const p=Math.min(1,2*Math.exp(-0.717*t-0.416*t*t));
   return {r:+r.toFixed(4), p:+p.toFixed(4)};
 }
 
-function pharmaLagScan(hourHist, drug, doseMl) {
-  const cpBase = pharmaPlasma24h(drug);
-  const hours = Array.from({length:17},(_,i)=>i+7);
+// Lag scan usando la curva COMBINADA del grupo
+function pharmaLagScanCombined(hourHist, drugs) {
+  const cpBase = pharmaCombinedPlasma(drugs);
+  const hours  = Array.from({length:17},(_,i)=>i+7);
   const crisis = hours.map(h=>hourHist[h]||0);
-  const total = crisis.reduce((s,v)=>s+v,0);
+  const total  = crisis.reduce((s,v)=>s+v,0);
   if (total===0) return null;
   const crisisProb = crisis.map(v=>v/total);
 
   const results = LAG_VALS.map(lag => {
     const cpShifted = hours.map(h => {
-      const t = ((h - lag) % 24 + 24) % 24;
-      const t0 = Math.floor(t), t1 = (t0+1)%24;
-      return cpBase[t0]*(1-(t-t0)) + cpBase[t1]*(t-t0);
+      const t=((h-lag)%24+24)%24;
+      const t0=Math.floor(t), t1=(t0+1)%24;
+      return cpBase[t0]*(1-(t-t0))+cpBase[t1]*(t-t0);
     });
-    const std = arr => { const m=arr.reduce((s,v)=>s+v,0)/arr.length; return Math.sqrt(arr.reduce((s,v)=>s+(v-m)**2,0)/arr.length); };
-    if (std(cpShifted)<1e-6 || std(crisisProb)<1e-6) return {lag, r:0, p:1};
-    const {r,p} = pharmaPearson(cpShifted, crisisProb);
-    return {lag, r, p};
+    const std=arr=>{const m=arr.reduce((s,v)=>s+v,0)/arr.length;return Math.sqrt(arr.reduce((s,v)=>s+(v-m)**2,0)/arr.length);};
+    if (std(cpShifted)<1e-6||std(crisisProb)<1e-6) return {lag,r:0,p:1};
+    const {r,p}=pharmaPearson(cpShifted,crisisProb);
+    return {lag,r,p};
   });
 
   const negResults = results.filter(x=>x.r<0);
-  if (!negResults.length) {
-    const best = results.reduce((a,b)=>a.r<b.r?a:b);
-    return {drug, results, best, protected:false,
-            conclusion:'Sin correlación protectora detectada'};
-  }
-  const best = negResults.reduce((a,b)=>a.r<b.r?a:b);
-  let quality, significance;
-  if (best.p<0.05 && best.r<-0.4)      { quality='A'; significance=`Alta confianza (p=${best.p.toFixed(3)})`; }
-  else if (best.p<0.10 && best.r<-0.3) { quality='B'; significance=`Tendencia (p=${best.p.toFixed(3)})`; }
-  else                                   { quality='C'; significance=`No significativa (p=${best.p.toFixed(3)})`; }
 
-  return {drug, results, best, protected:true, quality, significance,
-          conclusion:`Lag ${best.lag}h | r=${best.r.toFixed(3)} | ${significance}`};
+  // p=1 o sin correlación negativa → no hay resultado interpretable
+  if (!negResults.length) return {results, best:null, protected:false, quality:null};
+
+  const best = negResults.reduce((a,b)=>a.r<b.r?a:b);
+
+  // Si p es muy alto, el resultado no es confiable
+  if (best.p > 0.5) return {results, best, protected:false, quality:null};
+
+  let quality, significance;
+  if      (best.p<0.05 && best.r<-0.4) { quality='A'; significance=`Alta confianza (p=${best.p.toFixed(3)})`; }
+  else if (best.p<0.10 && best.r<-0.3) { quality='B'; significance=`Tendencia (p=${best.p.toFixed(3)})`; }
+  else                                   { quality='C'; significance=`Débil (p=${best.p.toFixed(3)})`; }
+
+  const conclusion=`Lag ${best.lag}h | r=${best.r.toFixed(3)} | ${significance}`;
+  return {results, best, protected:true, quality, significance, conclusion,
+          drugsLabel:drugs.join(' + ')};
 }
 
 function pharmaBuildGroups(events, meds, weightHistory) {
-  if (!events.length || !meds.length) return [];
+  if (!events.length||!meds.length) return [];
 
-  // Build daily med doses from med periods
+  // Construir dosis diarias desde los períodos de medicamentos
+  const allDates = [...new Set(events.map(e=>e.date))].sort();
   const dailyMeds = {};
-  events.forEach(e => {
-    if (!dailyMeds[e.date]) dailyMeds[e.date] = {kepra:0,depakene:0,trileptal:0};
-  });
+  allDates.forEach(d => dailyMeds[d]={kepra:0,depakene:0,trileptal:0});
+
   meds.forEach(med => {
-    const name = (med.name||'').toLowerCase();
-    const doses = [...(med.doses||[])].sort((a,b)=>a.date.localeCompare(b.date));
-    Object.keys(dailyMeds).sort().forEach(date => {
-      if (med.start && date < med.start) return;
-      if (med.end && date > med.end) return;
-      const activeDose = doses.filter(d=>d.date<=date).pop();
+    const name=(med.name||'').toLowerCase();
+    const doses=[...(med.doses||[])].sort((a,b)=>a.date.localeCompare(b.date));
+    allDates.forEach(date => {
+      if (med.start && date<med.start) return;
+      if (med.end   && date>med.end)   return;
+      const activeDose=doses.filter(d=>d.date<=date).pop();
       if (!activeDose) return;
-      const val = parseFloat(activeDose.val)||0;
-      if (name.includes('kepra') || name.includes('levetir'))      dailyMeds[date].kepra = val;
-      else if (name.includes('depakene') || name.includes('valp')) dailyMeds[date].depakene = val;
-      else if (name.includes('trileptal') || name.includes('oxc')) dailyMeds[date].trileptal = val;
+      const val=parseFloat(activeDose.val)||0;
+      if      (name.includes('kepra')||name.includes('levetir'))     dailyMeds[date].kepra=val;
+      else if (name.includes('depakene')||name.includes('valp'))     dailyMeds[date].depakene=val;
+      else if (name.includes('trileptal')||name.includes('oxc'))     dailyMeds[date].trileptal=val;
     });
   });
 
-  // Get weight for calculations
   const pesoKg = weightHistory?.length
-    ? weightHistory.sort((a,b)=>a.date.localeCompare(b.date)).slice(-1)[0].kg
+    ? [...weightHistory].sort((a,b)=>a.date.localeCompare(b.date)).slice(-1)[0].kg
     : 26.5;
 
-  // Group events by range
-  const groups = {};
-  events.forEach(e => {
-    const dm = dailyMeds[e.date];
+  // Agrupar por rango
+  const groups={};
+  events.forEach(e=>{
+    const dm=dailyMeds[e.date];
     if (!dm) return;
-    const rInfo = pharmaGetRange({meds:dm}, pesoKg);
+    const rInfo=pharmaGetRange(dm,pesoKg);
     if (!rInfo) return;
-    const key = rInfo.rn;
-    if (!groups[key]) groups[key] = {rn:key, label:rInfo.label, color:rInfo.color,
-                                       drugs:rInfo.drugs, dates:new Set(),
-                                       hourHist:{}, totalCrises:0, doses:{}};
+    const key=rInfo.rn;
+    if (!groups[key]) groups[key]={rn:key,label:rInfo.label,color:rInfo.color,
+                                    drugs:rInfo.drugs,dates:new Set(),
+                                    hourHist:{},totalCrises:0};
     groups[key].dates.add(e.date);
-    groups[key].hourHist[e.hour] = (groups[key].hourHist[e.hour]||0)+1;
+    groups[key].hourHist[e.hour]=(groups[key].hourHist[e.hour]||0)+1;
     groups[key].totalCrises++;
   });
 
-  // Add date counts and dose medians
-  Object.values(dailyMeds).forEach((dm,i) => {
-    const date = Object.keys(dailyMeds).sort()[i];
-    const rInfo = pharmaGetRange({meds:dm}, pesoKg);
-    if (!rInfo) return;
-    const key = rInfo.rn;
-    if (!groups[key]) return;
-    if (dm.kepra>0)     { groups[key].doses.Kepra    = groups[key].doses.Kepra    ? [...groups[key].doses.Kepra,   dm.kepra]    : [dm.kepra];    }
-    if (dm.depakene>0)  { groups[key].doses.Depakene  = groups[key].doses.Depakene  ? [...groups[key].doses.Depakene, dm.depakene] : [dm.depakene]; }
-    if (dm.trileptal>0) { groups[key].doses.Trileptal = groups[key].doses.Trileptal ? [...groups[key].doses.Trileptal,dm.trileptal]: [dm.trileptal];}
-  });
-
   return Object.values(groups)
-    .map(g => {
-      const n = g.dates.size;
-      const avg = n>0 ? +(g.totalCrises/n).toFixed(2) : 0;
-      const zeroDays = [...g.dates].filter(d => {
-        const h=Object.entries(g.hourHist).filter(([k])=>true);
-        return !events.some(e=>e.date===d);
-      }).length;
-      // Simpler zero days count
-      const daysWithCrises = new Set(events.filter(e=>g.dates.has(e.date)).map(e=>e.date)).size;
-      const zeroD = n - daysWithCrises;
-      // Lag scans
-      const scans = {};
-      g.drugs.forEach(drug => {
-        const doses = g.doses[drug];
-        if (doses?.length) {
-          const medDose = doses.sort((a,b)=>a-b)[Math.floor(doses.length/2)];
-          const mgkg = +(medDose * PHARMA_DB[drug].conc / pesoKg).toFixed(1);
-          const lr = pharmaLagScan(g.hourHist, drug, medDose);
-          if (lr) scans[drug] = {...lr, doseMl:+medDose.toFixed(1), doseMgKg:mgkg};
-        }
-      });
-      return {...g, nDays:n, avgDaily:avg, zeroDays:zeroD, scans, pesoKg};
+    .map(g=>{
+      const n=g.dates.size;
+      const avg=n>0?+(g.totalCrises/n).toFixed(2):0;
+      const daysWithCrises=new Set(events.filter(e=>g.dates.has(e.date)).map(e=>e.date)).size;
+      const zeroDays=n-daysWithCrises;
+      const sortedDates=[...g.dates].sort();
+      const dateFrom=sortedDates[0];
+      const dateTo=sortedDates[sortedDates.length-1];
+
+      // UN solo lag scan por grupo usando curva combinada
+      const scan = g.totalCrises>0
+        ? pharmaLagScanCombined(g.hourHist, g.drugs)
+        : null;
+
+      return {...g,nDays:n,avgDaily:avg,zeroDays,dateFrom,dateTo,scan,pesoKg};
     })
     .sort((a,b)=>a.rn-b.rn);
 }
 
 // ── RENDER ──────────────────────────────────────────────────
-let _lagCharts = {};
+let _lagCharts={};
 
-function renderDPharma() {
-  const pat = getActivePat();
-  const el = document.getElementById('d-pharma-inner');
+function renderDPharma(){
+  const pat=getActivePat();
+  const el=document.getElementById('d-pharma-inner');
   if (!el) return;
-
-  if (!pat || !pat.events?.length || !pat.meds?.length) {
-    el.innerHTML = '<div class="empty">Seleccioná un paciente con datos de crisis y medicamentos.</div>';
+  if (!pat||!pat.events?.length||!pat.meds?.length){
+    el.innerHTML='<div class="empty">Seleccioná un paciente con datos de crisis y medicamentos.</div>';
     return;
   }
-
-  const groups = pharmaBuildGroups(pat.events, pat.meds, pat.weights||[]);
-  if (!groups.length) {
-    el.innerHTML = '<div class="empty">No se pudieron identificar rangos terapéuticos. Verificá que los medicamentos tengan fechas de inicio.</div>';
+  const groups=pharmaBuildGroups(pat.events,pat.meds,pat.weights||[]);
+  if (!groups.length){
+    el.innerHTML='<div class="empty">No se pudieron identificar rangos terapéuticos. Verificá que los medicamentos tengan fechas de inicio.</div>';
     return;
   }
-
-  // Destroy old charts
   Object.values(_lagCharts).forEach(c=>c.destroy());
-  _lagCharts = {};
+  _lagCharts={};
 
-  let html = `
+  const fmtD=d=>{if(!d)return'';const p=d.split('-');const ms=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];return`${+p[2]}-${ms[+p[1]-1]}-${p[0].slice(2)}`;};
+
+  let html=`
   <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px" id="pharma-tabs">
     <button class="ctrl-btn active" onclick="showPharmaSection('rangos',this)">Rangos</button>
     <button class="ctrl-btn" onclick="showPharmaSection('resumen',this)">Resumen</button>
@@ -1857,192 +1851,206 @@ function renderDPharma() {
     <button class="ctrl-btn" onclick="showPharmaSection('barrido',this)">Barrido numérico</button>
   </div>`;
 
-  // ── RANGOS ──
-  html += `<div id="pharma-rangos" class="pharma-sec">
+  // ── RANGOS ──────────────────────────────────────────────
+  html+=`<div id="pharma-rangos" class="pharma-sec">
     <div class="card">
       <div class="card-title">Rangos terapéuticos identificados</div>
-      <p style="font-size:12px;color:var(--t2);margin-bottom:10px;line-height:1.6">
-        Cada rango agrupa los días donde la combinación de fármacos y su estado terapéutico (sub/terapéutico) es igual.
-      </p>
+      <p style="font-size:12px;color:var(--t2);margin-bottom:10px;line-height:1.6">Agrupa días con la misma combinación de fármacos y estado terapéutico (sub / terapéutico).</p>
       <table style="width:100%;border-collapse:collapse;font-size:12px">
         <thead><tr>
-          <th style="text-align:left;padding:6px 8px;background:var(--bg2);color:var(--t2);font-size:10px;text-transform:uppercase;border-bottom:.5px solid var(--bd)">Rango</th>
-          <th style="text-align:center;padding:6px 8px;background:var(--bg2);color:var(--t2);font-size:10px;text-transform:uppercase;border-bottom:.5px solid var(--bd)">Días</th>
-          <th style="text-align:center;padding:6px 8px;background:var(--bg2);color:var(--t2);font-size:10px;text-transform:uppercase;border-bottom:.5px solid var(--bd)">Crisis</th>
-          <th style="text-align:center;padding:6px 8px;background:var(--bg2);color:var(--t2);font-size:10px;text-transform:uppercase;border-bottom:.5px solid var(--bd)">Crisis/día</th>
-          <th style="text-align:center;padding:6px 8px;background:var(--bg2);color:var(--t2);font-size:10px;text-transform:uppercase;border-bottom:.5px solid var(--bd)">Sin crisis</th>
+          ${['Rango','Período','Días','Crisis','Crisis/día','Sin crisis'].map(h=>`<th style="text-align:${h==='Rango'?'left':'center'};padding:6px 8px;background:var(--bg2);color:var(--t2);font-size:10px;text-transform:uppercase;border-bottom:.5px solid var(--bd)">${h}</th>`).join('')}
         </tr></thead><tbody>`;
-
-  groups.forEach((g,i) => {
-    const bg = i%2===0 ? 'var(--bg2)' : 'var(--bg)';
-    const zPct = g.nDays>0 ? Math.round(g.zeroDays/g.nDays*100) : 0;
-    html += `<tr>
-      <td style="padding:7px 8px;border-bottom:.5px solid var(--bd);border-left:3px solid ${g.color.replace('#','')===g.color?g.color:'#'+g.color}">
-        <div style="font-weight:600;color:var(--t1);font-size:12px">R${g.rn}</div>
+  groups.forEach((g,i)=>{
+    const zPct=g.nDays>0?Math.round(g.zeroDays/g.nDays*100):0;
+    const avgColor=g.avgDaily<2?'#2E7D32':g.avgDaily<5?'#F59E0B':'#C62828';
+    html+=`<tr>
+      <td style="padding:7px 8px;border-bottom:.5px solid var(--bd);border-left:3px solid ${g.color}">
+        <div style="font-weight:700;color:var(--t1);font-size:13px">R${g.rn}</div>
         <div style="font-size:11px;color:var(--t2)">${g.label}</div>
       </td>
-      <td style="padding:7px 8px;border-bottom:.5px solid var(--bd);text-align:center;font-weight:700;font-size:14px">${g.nDays}</td>
-      <td style="padding:7px 8px;border-bottom:.5px solid var(--bd);text-align:center;font-weight:700;font-size:14px">${g.totalCrises}</td>
-      <td style="padding:7px 8px;border-bottom:.5px solid var(--bd);text-align:center;font-weight:700;font-size:16px;color:${g.avgDaily<2?'#2E7D32':g.avgDaily<5?'#F59E0B':'#C62828'}">${g.avgDaily}</td>
-      <td style="padding:7px 8px;border-bottom:.5px solid var(--bd);text-align:center;font-size:12px;color:${zPct>50?'#2E7D32':'var(--t2)'}">${g.zeroDays}d (${zPct}%)</td>
+      <td style="padding:7px 8px;border-bottom:.5px solid var(--bd);text-align:center;font-size:11px;color:var(--t2)">${fmtD(g.dateFrom)}<br>${fmtD(g.dateTo)}</td>
+      <td style="padding:7px 8px;border-bottom:.5px solid var(--bd);text-align:center;font-weight:700;font-size:15px">${g.nDays}</td>
+      <td style="padding:7px 8px;border-bottom:.5px solid var(--bd);text-align:center;font-weight:700;font-size:15px">${g.totalCrises}</td>
+      <td style="padding:7px 8px;border-bottom:.5px solid var(--bd);text-align:center;font-weight:700;font-size:17px;color:${avgColor}">${g.avgDaily}</td>
+      <td style="padding:7px 8px;border-bottom:.5px solid var(--bd);text-align:center;font-size:12px;color:${zPct>50?'#2E7D32':'var(--t2)'}">${g.zeroDays}d<br>(${zPct}%)</td>
     </tr>`;
   });
-  html += `</tbody></table></div></div>`;
+  html+=`</tbody></table></div></div>`;
 
-  // ── RESUMEN ──
-  html += `<div id="pharma-resumen" class="pharma-sec" style="display:none">
-    <div class="card-title" style="margin-bottom:10px">Guía de lectura</div>
+  // ── RESUMEN ──────────────────────────────────────────────
+  html+=`<div id="pharma-resumen" class="pharma-sec" style="display:none">
     <div style="background:var(--bg2);border-radius:var(--rm);padding:11px 13px;font-size:12px;color:var(--t2);line-height:1.8;margin-bottom:12px">
-      <div><strong style="color:var(--t1)">Lag</strong> — Horas que tarda el medicamento en reducir las crisis desde que se ingiere.</div>
-      <div><strong style="color:var(--t1)">r de Pearson</strong> — Cuanto más negativo, más claro es el efecto supresor. r=-0.7 es muy bueno.</div>
-      <div><strong style="color:var(--t1)">p-valor</strong> — Si p&lt;0.05 el resultado es estadísticamente confiable.</div>
+      <div><strong style="color:var(--t1)">Lag</strong> — Horas que tarda la combinación de fármacos en reducir las crisis.</div>
+      <div><strong style="color:var(--t1)">r de Pearson</strong> — Cuanto más negativo, más claro el efecto supresor. Valores cerca de 0 o positivos indican ausencia de efecto medible.</div>
+      <div><strong style="color:var(--t1)">p-valor</strong> — p&lt;0.05 = estadísticamente confiable. p&gt;0.50 = sin correlación útil.</div>
     </div>`;
 
-  groups.forEach(g => {
-    const scans = Object.values(g.scans);
-    html += `<div class="card" style="margin-bottom:10px;border-left:3px solid ${g.color}">
-      <div style="font-size:13px;font-weight:700;color:var(--t1);margin-bottom:8px">R${g.rn} — ${g.label}</div>
-      <div style="display:flex;gap:8px;margin-bottom:10px">
+  groups.forEach(g=>{
+    const lr=g.scan;
+    const hasResult=lr&&lr.protected&&lr.best;
+    const qColor=!hasResult?'var(--bg2)':lr.quality==='A'?'#C8E6C9':lr.quality==='B'?'#FFF9C4':'#F5F5F5';
+    const tColor=!hasResult?'var(--t2)':lr.quality==='A'?'#1B5E20':lr.quality==='B'?'#78350F':'#555';
+    const qualLabel=!hasResult?'Sin resultado interpretable':lr.quality==='A'?'Alta confianza':lr.quality==='B'?'Tendencia':'Débil';
+
+    html+=`<div class="card" style="margin-bottom:10px;border-left:3px solid ${g.color}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--t1)">R${g.rn} — ${g.label}</div>
+          <div style="font-size:11px;color:var(--t2)">${fmtD(g.dateFrom)} → ${fmtD(g.dateTo)} · ${g.drugs.join(' + ')}</div>
+        </div>
+        <span style="font-size:11px;padding:3px 9px;border-radius:20px;font-weight:600;background:${qColor};color:${tColor};white-space:nowrap;margin-left:8px">${qualLabel}</span>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:${hasResult?'10':'0'}px">
         <div style="flex:1;background:var(--bg2);border-radius:var(--rm);padding:8px;text-align:center">
-          <div style="font-size:18px;font-weight:700">${g.nDays}</div><div style="font-size:10px;color:var(--t2)">días</div></div>
+          <div style="font-size:17px;font-weight:700">${g.nDays}</div><div style="font-size:10px;color:var(--t2)">días</div></div>
         <div style="flex:1;background:var(--bg2);border-radius:var(--rm);padding:8px;text-align:center">
-          <div style="font-size:18px;font-weight:700">${g.totalCrises}</div><div style="font-size:10px;color:var(--t2)">crisis</div></div>
+          <div style="font-size:17px;font-weight:700">${g.totalCrises}</div><div style="font-size:10px;color:var(--t2)">crisis</div></div>
         <div style="flex:1;background:var(--bg2);border-radius:var(--rm);padding:8px;text-align:center">
-          <div style="font-size:18px;font-weight:700;color:${g.avgDaily<2?'#2E7D32':g.avgDaily<5?'#F59E0B':'#C62828'}">${g.avgDaily}</div>
+          <div style="font-size:17px;font-weight:700;color:${g.avgDaily<2?'#2E7D32':g.avgDaily<5?'#F59E0B':'#C62828'}">${g.avgDaily}</div>
           <div style="font-size:10px;color:var(--t2)">crisis/día</div></div>
       </div>`;
 
-    if (!scans.length) {
-      html += `<div style="font-size:12px;color:var(--t3);text-align:center;padding:8px">Sin análisis disponible</div>`;
-    } else {
-      scans.forEach(lr => {
-        const qColor = !lr.protected ? '#FFCDD2' : lr.quality==='A' ? '#C8E6C9' : lr.quality==='B' ? '#FFF9C4' : '#F5F5F5';
-        const tColor = !lr.protected ? '#B71C1C' : lr.quality==='A' ? '#1B5E20' : lr.quality==='B' ? '#78350F' : '#555';
-        html += `<div style="border-top:.5px solid var(--bd);padding-top:9px;margin-top:6px">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-            <span style="font-size:12px;font-weight:600;color:var(--t1)">${lr.drug} · ${lr.doseMgKg} mg/kg/día</span>
-            <span style="font-size:11px;padding:3px 9px;border-radius:20px;font-weight:600;background:${qColor};color:${tColor}">${lr.protected?(lr.quality==='A'?'Alta confianza':lr.quality==='B'?'Tendencia':'Débil'):'Sin protección'}</span>
-          </div>
-          <div style="display:flex;gap:6px;margin-bottom:8px">
-            <div style="flex:1;background:${qColor};border-radius:var(--rm);padding:7px;text-align:center">
-              <div style="font-size:17px;font-weight:700;color:${tColor}">${lr.protected?lr.best.lag+'h':'—'}</div>
-              <div style="font-size:10px;color:var(--t2)">lag óptimo</div></div>
-            <div style="flex:1;background:${qColor};border-radius:var(--rm);padding:7px;text-align:center">
-              <div style="font-size:17px;font-weight:700;color:${tColor}">${lr.best.r.toFixed(3)}</div>
-              <div style="font-size:10px;color:var(--t2)">Pearson r</div></div>
-            <div style="flex:1;background:${qColor};border-radius:var(--rm);padding:7px;text-align:center">
-              <div style="font-size:17px;font-weight:700;color:${tColor}">${lr.best.p<0.001?'<0.001':lr.best.p.toFixed(3)}</div>
-              <div style="font-size:10px;color:var(--t2)">p-valor</div></div>
-          </div>
-          <div style="background:var(--bg2);border-radius:var(--rm);padding:8px 10px;font-size:12px;color:var(--t2);line-height:1.6">${lr.conclusion}</div>
-        </div>`;
-      });
+    if (hasResult) {
+      html+=`<div style="display:flex;gap:6px;margin-bottom:8px">
+        <div style="flex:1;background:${qColor};border-radius:var(--rm);padding:7px;text-align:center">
+          <div style="font-size:17px;font-weight:700;color:${tColor}">${lr.best.lag}h</div>
+          <div style="font-size:10px;color:var(--t2)">lag óptimo</div></div>
+        <div style="flex:1;background:${qColor};border-radius:var(--rm);padding:7px;text-align:center">
+          <div style="font-size:17px;font-weight:700;color:${tColor}">${lr.best.r.toFixed(3)}</div>
+          <div style="font-size:10px;color:var(--t2)">Pearson r</div></div>
+        <div style="flex:1;background:${qColor};border-radius:var(--rm);padding:7px;text-align:center">
+          <div style="font-size:17px;font-weight:700;color:${tColor}">${lr.best.p<0.001?'<0.001':lr.best.p.toFixed(3)}</div>
+          <div style="font-size:10px;color:var(--t2)">p-valor</div></div>
+      </div>
+      <div style="background:var(--bg2);border-radius:var(--rm);padding:8px 10px;font-size:12px;color:var(--t2);line-height:1.6">${lr.conclusion}</div>`;
     }
-    html += `</div>`;
+    html+=`</div>`;
   });
-  html += `</div>`;
+  html+=`</div>`;
 
-  // ── GRÁFICOS LAG SCAN ──
-  html += `<div id="pharma-graficos" class="pharma-sec" style="display:none">`;
-  groups.forEach(g => {
-    Object.values(g.scans).forEach(lr => {
-      const cid = `lagchart_R${g.rn}_${lr.drug}`;
-      html += `<div class="card" style="margin-bottom:12px">
-        <div style="font-size:12px;font-weight:700;color:var(--t1);margin-bottom:4px">R${g.rn} — ${lr.drug}</div>
-        <div style="font-size:11px;color:var(--t2);margin-bottom:10px">${g.label} · ${lr.doseMgKg} mg/kg/día · ${g.nDays} días · ${g.totalCrises} crisis</div>
-        <div style="position:relative;width:100%;height:200px"><canvas id="${cid}"></canvas></div>
-        <div style="font-size:10px;color:var(--t3);text-align:center;margin-top:4px">Lag post-ingesta (h) · punto verde = lag óptimo · área azul = efecto protector</div>
-      </div>`;
-    });
+  // ── GRÁFICOS LAG SCAN ────────────────────────────────────
+  html+=`<div id="pharma-graficos" class="pharma-sec" style="display:none">`;
+  groups.forEach(g=>{
+    const lr=g.scan;
+    const cid=`lagchart_R${g.rn}`;
+    const title=`R${g.rn} · ${fmtD(g.dateFrom)} → ${fmtD(g.dateTo)}`;
+    const subtitle=`${g.label} · ${g.nDays} días · ${g.totalCrises} crisis · ${g.avgDaily}/día`;
+    html+=`<div class="card" style="margin-bottom:12px">
+      <div style="font-size:12px;font-weight:700;color:var(--t1);margin-bottom:2px">${title}</div>
+      <div style="font-size:11px;color:var(--t2);margin-bottom:10px">${subtitle}</div>`;
+    if (!lr||!lr.results?.length){
+      html+=`<div style="text-align:center;padding:20px;color:var(--t3);font-size:12px">Sin crisis en este período — no es posible calcular la correlación</div>`;
+    } else {
+      html+=`<div style="position:relative;width:100%;height:200px"><canvas id="${cid}"></canvas></div>
+        <div style="font-size:10px;color:var(--t3);text-align:center;margin-top:4px">Lag post-ingesta (h) · ${g.drugs.join('+')} · Curva combinada normalizada</div>`;
+    }
+    html+=`</div>`;
   });
-  html += `</div>`;
+  html+=`</div>`;
 
-  // ── BARRIDO NUMÉRICO ──
-  html += `<div id="pharma-barrido" class="pharma-sec" style="display:none">
+  // ── BARRIDO NUMÉRICO ─────────────────────────────────────
+  html+=`<div id="pharma-barrido" class="pharma-sec" style="display:none">
     <div class="card">
       <div class="card-title">Barrido numérico — r de Pearson por lag</div>
-      <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:11px;min-width:400px">
+      <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:11px;min-width:380px">
         <thead><tr>
-          <th style="text-align:left;padding:5px 6px;background:var(--bg2);color:var(--t2);font-size:9px;text-transform:uppercase;border-bottom:.5px solid var(--bd);white-space:nowrap">Rango / Fármaco</th>`;
-  LAG_VALS.forEach(l => {
-    html += `<th style="text-align:center;padding:5px 6px;background:var(--bg2);color:var(--t2);font-size:9px;text-transform:uppercase;border-bottom:.5px solid var(--bd)">${l}h</th>`;
-  });
-  html += `<th style="text-align:center;padding:5px 6px;background:var(--bg2);color:var(--t2);font-size:9px;text-transform:uppercase;border-bottom:.5px solid var(--bd)">Óptimo</th></tr></thead><tbody>`;
+          <th style="text-align:left;padding:5px 6px;background:var(--bg2);color:var(--t2);font-size:9px;text-transform:uppercase;border-bottom:.5px solid var(--bd)">Rango / Período</th>`;
+  LAG_VALS.forEach(l=>{html+=`<th style="text-align:center;padding:5px 6px;background:var(--bg2);color:var(--t2);font-size:9px;border-bottom:.5px solid var(--bd)">${l}h</th>`;});
+  html+=`<th style="text-align:center;padding:5px 6px;background:var(--bg2);color:var(--t2);font-size:9px;border-bottom:.5px solid var(--bd)">Óptimo</th></tr></thead><tbody>`;
 
-  groups.forEach((g,gi) => {
-    Object.values(g.scans).forEach(lr => {
-      const bg = gi%2===0 ? 'var(--bg2)' : 'var(--bg)';
-      html += `<tr><td style="padding:6px;border-bottom:.5px solid var(--bd);font-weight:600;font-size:11px;white-space:nowrap">R${g.rn} ${lr.drug}<br><span style="font-weight:400;color:var(--t2);font-size:10px">${lr.doseMgKg}mg/kg</span></td>`;
-      lr.results.forEach(res => {
-        const rv = res.r; const is_best = res.lag===lr.best.lag;
+  groups.forEach((g,gi)=>{
+    const lr=g.scan;
+    const rowbg=gi%2===0?'var(--bg2)':'var(--bg)';
+    html+=`<tr><td style="padding:6px;border-bottom:.5px solid var(--bd);border-left:3px solid ${g.color}">
+      <div style="font-weight:700;font-size:12px">R${g.rn} — ${g.label}</div>
+      <div style="font-size:10px;color:var(--t2)">${fmtD(g.dateFrom)} → ${fmtD(g.dateTo)} · ${g.drugs.join('+')}</div>
+    </td>`;
+    if (!lr||!lr.results?.length){
+      LAG_VALS.forEach(()=>{html+=`<td style="padding:5px 4px;border-bottom:.5px solid var(--bd);text-align:center;color:var(--t3);font-size:10px">—</td>`;});
+      html+=`<td style="padding:5px;border-bottom:.5px solid var(--bd);text-align:center;color:var(--t3);font-size:10px">Sin crisis</td>`;
+    } else {
+      lr.results.forEach(res=>{
+        const rv=res.r; const isBest=lr.best&&res.lag===lr.best.lag;
         let bg2,fc2;
-        if (rv<-0.5){bg2='#2E7D32';fc2='#fff';}
+        if(rv<-0.5){bg2='#2E7D32';fc2='#fff';}
         else if(rv<-0.3){bg2='#66BB6A';fc2='#000';}
         else if(rv<-0.1){bg2='#C8E6C9';fc2='#000';}
         else if(rv<0.1){bg2='transparent';fc2='var(--t2)';}
         else if(rv<0.3){bg2='#EF9A9A';fc2='#000';}
         else{bg2='#C62828';fc2='#fff';}
-        html += `<td style="padding:5px 4px;border-bottom:.5px solid var(--bd);text-align:center;background:${bg2};color:${fc2};font-weight:${is_best?700:400};font-size:${is_best?12:10}px;${is_best?'outline:2px solid #000;':''}">
-          ${rv.toFixed(3)}</td>`;
+        html+=`<td style="padding:5px 4px;border-bottom:.5px solid var(--bd);text-align:center;background:${bg2};color:${fc2};font-weight:${isBest?700:400};font-size:${isBest?12:10}px;${isBest?'outline:2px solid #333;outline-offset:-2px;':''}">${rv.toFixed(3)}</td>`;
       });
-      const qc = !lr.protected?'#FFCDD2':lr.quality==='A'?'#C8E6C9':'#FFF9C4';
-      const qtc = !lr.protected?'#B71C1C':lr.quality==='A'?'#1B5E20':'#78350F';
-      html += `<td style="padding:5px 6px;border-bottom:.5px solid var(--bd);text-align:center;background:${qc};color:${qtc};font-weight:700;font-size:11px">
-        ${lr.protected?`${lr.best.lag}h<br>r=${lr.best.r.toFixed(3)}`:'—'}</td></tr>`;
-    });
+      const hasRes=lr.protected&&lr.best;
+      const qc=hasRes?(lr.quality==='A'?'#C8E6C9':lr.quality==='B'?'#FFF9C4':'#F5F5F5'):'var(--bg2)';
+      const qtc=hasRes?(lr.quality==='A'?'#1B5E20':lr.quality==='B'?'#78350F':'#555'):'var(--t3)';
+      html+=`<td style="padding:5px 6px;border-bottom:.5px solid var(--bd);text-align:center;background:${qc};color:${qtc};font-weight:700;font-size:11px">${hasRes?`${lr.best.lag}h<br>r=${lr.best.r.toFixed(3)}`:'—'}</td>`;
+    }
+    html+=`</tr>`;
   });
-  html += `</tbody></table></div></div></div>`;
+  html+=`</tbody></table></div></div></div>`;
 
-  el.innerHTML = html;
+  el.innerHTML=html;
 
-  // Render lag charts after DOM update
-  setTimeout(() => {
-    groups.forEach(g => {
-      Object.values(g.scans).forEach(lr => {
-        const cid = `lagchart_R${g.rn}_${lr.drug}`;
-        const canvas = document.getElementById(cid);
-        if (!canvas) return;
-        if (_lagCharts[cid]) _lagCharts[cid].destroy();
-        const {tc,gc} = getCS();
-        const lags = lr.results.map(x=>x.lag+'h');
-        const corrs = lr.results.map(x=>x.r);
-        const bestIdx = lr.results.findIndex(x=>x.lag===lr.best.lag);
-        _lagCharts[cid] = new Chart(canvas, {
-          type:'line',
-          data:{labels:lags,datasets:[{
-            label:'Pearson r', data:corrs,
-            borderColor:PHARMA_DB[lr.drug]?.color||'#1565C0',
-            borderWidth:2.5,
-            backgroundColor: corrs.map(r=>r<0?'rgba(59,130,246,0.08)':'rgba(239,68,68,0.06)'),
-            fill:true, tension:0.4,
-            pointRadius:corrs.map((_,i)=>i===bestIdx?8:3),
-            pointBackgroundColor:corrs.map((_,i)=>i===bestIdx?'#2E7D32':'white'),
-            pointBorderColor:corrs.map((_,i)=>i===bestIdx?'#2E7D32':PHARMA_DB[lr.drug]?.color||'#1565C0'),
-            pointBorderWidth:2,
-          }]},
-          options:{
-            responsive:true, maintainAspectRatio:false,
-            plugins:{legend:{display:false},tooltip:{callbacks:{
-              title:ctx=>`Lag ${ctx[0].label} post-dosis`,
-              label:ctx=>`r = ${ctx.parsed.y.toFixed(3)} | p = ${lr.results[ctx.dataIndex]?.p.toFixed(3)}`
-            }}},
-            scales:{
-              x:{title:{display:true,text:'Horas post-ingesta',color:tc,font:{size:9}},ticks:{color:tc,font:{size:9}},grid:{color:gc,lineWidth:.5}},
-              y:{title:{display:true,text:'Pearson r',color:tc,font:{size:9}},ticks:{color:tc,font:{size:9},callback:v=>v.toFixed(2)},grid:{color:gc,lineWidth:.5}}
-            }
+  // Renderizar gráficos Chart.js después del DOM
+  setTimeout(()=>{
+    groups.forEach(g=>{
+      const lr=g.scan;
+      if (!lr?.results?.length) return;
+      const cid=`lagchart_R${g.rn}`;
+      const canvas=document.getElementById(cid);
+      if (!canvas) return;
+      if (_lagCharts[cid]) _lagCharts[cid].destroy();
+      const {tc,gc}=getCS();
+      const lags=lr.results.map(x=>x.lag+'h');
+      const corrs=lr.results.map(x=>x.r);
+      const bestIdx=lr.best?lr.results.findIndex(x=>x.lag===lr.best.lag):-1;
+      // Color de línea: mezcla de colores de los fármacos del grupo
+      const lineColor=g.drugs.length===1?(PHARMA_DB[g.drugs[0]]?.color||'#1565C0'):'#546E7A';
+      _lagCharts[cid]=new Chart(canvas,{
+        type:'line',
+        data:{labels:lags,datasets:[{
+          label:'Pearson r (combinado)',
+          data:corrs,
+          borderColor:lineColor,
+          borderWidth:2.5,
+          backgroundColor:corrs.map(r=>r<0?'rgba(59,130,246,0.07)':'rgba(239,68,68,0.05)'),
+          fill:true,tension:0.4,
+          pointRadius:corrs.map((_,i)=>i===bestIdx?8:3),
+          pointBackgroundColor:corrs.map((_,i)=>i===bestIdx?'#2E7D32':'white'),
+          pointBorderColor:corrs.map((_,i)=>i===bestIdx?'#2E7D32':lineColor),
+          pointBorderWidth:2,
+        }]},
+        options:{
+          responsive:true,maintainAspectRatio:false,
+          plugins:{
+            legend:{display:false},
+            tooltip:{callbacks:{
+              title:ctx=>`Lag ${ctx[0].label} post-ingesta`,
+              label:ctx=>{
+                const i=ctx.dataIndex;
+                return[`r = ${ctx.parsed.y.toFixed(3)}`,`p = ${lr.results[i]?.p.toFixed(3)}`];
+              }
+            }}
+          },
+          scales:{
+            x:{title:{display:true,text:'Horas post-ingesta',color:tc,font:{size:9}},
+               ticks:{color:tc,font:{size:9}},grid:{color:gc,lineWidth:.5}},
+            y:{title:{display:true,text:'Pearson r',color:tc,font:{size:9}},
+               ticks:{color:tc,font:{size:9},callback:v=>v.toFixed(2)},
+               grid:{color:gc,lineWidth:.5}}
           }
-        });
+        }
       });
     });
-  }, 300);
+  },300);
 }
 
-function showPharmaSection(sec, btn) {
+function showPharmaSection(sec,btn){
   document.querySelectorAll('.pharma-sec').forEach(el=>el.style.display='none');
   document.querySelectorAll('#pharma-tabs .ctrl-btn').forEach(b=>b.classList.remove('active'));
-  const el = document.getElementById('pharma-'+sec);
-  if (el) el.style.display='block';
-  if (btn) btn.classList.add('active');
+  const el=document.getElementById('pharma-'+sec);
+  if(el) el.style.display='block';
+  if(btn) btn.classList.add('active');
 }
 
 
