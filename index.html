@@ -395,6 +395,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="tab-bar">
     <button class="tab active" onclick="dTab('patients',this)">Pacientes</button>
     <button class="tab" onclick="dTab('view',this)">Ver datos</button>
+    <button class="tab" onclick="dTab('graficos',this)">Gráficos</button>
     <button class="tab" onclick="dTab('pharma',this)">Farmacología</button>
     <button class="tab" onclick="dTab('compare',this)">Comparar</button>
     <button class="tab" onclick="dTab('dperf',this)">Perfil</button>
@@ -469,8 +470,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <div class="stat"><div class="lbl">Mejor día</div><div class="val" id="d-st-best">—</div><div class="sub">menos ataques</div></div>
         <div class="stat"><div class="lbl">Peor día</div><div class="val" id="d-st-worst">—</div><div class="sub">más ataques</div></div>
       </div>
-      <div class="card"><div class="card-title">Crisis diarias + media móvil 7d</div><div class="legend"><span class="leg"><span style="width:10px;height:10px;border-radius:2px;background:#6BAED6;display:inline-block"></span>Crisis/día</span><span class="leg"><span style="width:16px;border-top:2.5px solid #E05252;display:inline-block"></span>Media móvil</span></div><div style="position:relative;width:100%;height:200px"><canvas id="d-main-chart"></canvas></div></div>
-      <div class="card"><div class="card-title">Probabilidad de crisis por hora</div><div style="position:relative;width:100%;height:155px"><canvas id="d-prob-chart"></canvas></div></div>
+      
+      
       <div style="display:flex;justify-content:flex-end;margin-bottom:4px">
         <button onclick="shareChartsAsImage('d')" style="display:flex;align-items:center;gap:5px;padding:7px 14px;border:0.5px solid var(--bd2);border-radius:20px;background:var(--bg);color:var(--t2);font-size:12px;font-weight:500;cursor:pointer">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
@@ -478,6 +479,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         </button>
       </div>
     </div>
+  </div>
+  <!-- GRÁFICOS DOCTOR -->
+  <div id="d-sec-graficos" class="section">
+    <div id="d-graficos-inner"><div class="empty">Seleccioná un paciente con datos para ver los gráficos.</div></div>
   </div>
   <!-- FARMACOLOGÍA DOCTOR -->
   <div id="d-sec-pharma" class="section">
@@ -1420,7 +1425,7 @@ function pickDocColor(id,cid){G.doctor.profile.colorId=id;document.querySelector
 function saveDoctorProfile(){const name=document.getElementById('d-name').value.trim();if(!name)return;G.doctor.profile={name,spec:document.getElementById('d-spec').value.trim(),colorId:G.doctor.profile.colorId||'slate'};save();document.getElementById('setup-doctor').style.display='none';launchDoctor();}
 function launchDoctor(){document.getElementById('app-doctor').style.display='block';document.getElementById('app-patient').style.display='none';const d=G.doctor.profile;document.getElementById('d-topname').textContent=d.name||'Doctor';document.getElementById('d-topspec').textContent=d.spec||'';document.getElementById('d-cfg-name').value=d.name||'';document.getElementById('d-cfg-spec').value=d.spec||'';buildColorPicker('d-cfg-colors',d.colorId||'slate','pickDocColor');renderDPatList();renderDCompareSlots();}
 function saveDCfg(){const name=document.getElementById('d-cfg-name').value.trim();if(!name)return;G.doctor.profile={name,spec:document.getElementById('d-cfg-spec').value.trim(),colorId:G.doctor.profile.colorId||'slate'};save();launchDoctor();showToast('Perfil guardado ✓');}
-function dTab(t,btn){document.querySelectorAll('#app-doctor .section').forEach(s=>s.classList.remove('active'));document.querySelectorAll('#app-doctor .tab').forEach(b=>b.classList.remove('active'));var _ds=document.getElementById('d-sec-'+t);if(_ds)_ds.classList.add('active');btn.classList.add('active');if(t==='view')renderDView();if(t==='pharma')renderDPharma();if(t==='compare')renderDCompareSlots();}
+function dTab(t,btn){document.querySelectorAll('#app-doctor .section').forEach(s=>s.classList.remove('active'));document.querySelectorAll('#app-doctor .tab').forEach(b=>b.classList.remove('active'));var _ds=document.getElementById('d-sec-'+t);if(_ds)_ds.classList.add('active');btn.classList.add('active');if(t==='view')renderDView();if(t==='graficos')renderDGraficos();if(t==='pharma')renderDPharma();if(t==='compare')renderDCompareSlots();}
 
 // DOCTOR PATIENTS
 let dMedDoses=[];
@@ -2043,6 +2048,17 @@ function renderDPharma(){
       });
     });
   },300);
+  setTimeout(()=>{
+    const _p=getActivePat();
+    if(!_p?.events?.length||!_p?.meds?.length)return;
+    const _i=document.getElementById('d-pharma-inner');
+    if(!_i||document.getElementById('d-iei-section'))return;
+    const _d=document.createElement('div');
+    _d.id='d-iei-section';
+    _d.innerHTML='<div class="card" style="margin-top:12px"><div class="card-title">Intervalos Inter-Ictales y Clusters</div><div id="d-iei-content"></div></div>';
+    _i.appendChild(_d);
+    renderIEISummary(_p.events,_p.meds,_p.weights||[],'d-iei-content');
+  },700);
 }
 
 function showPharmaSection(sec,btn){
@@ -2052,6 +2068,428 @@ function showPharmaSection(sec,btn){
   if(el) el.style.display='block';
   if(btn) btn.classList.add('active');
 }
+
+
+// ════════════════════════════════════════════════════════════
+// GRÁFICOS DOCTOR — por rangos terapéuticos
+// ════════════════════════════════════════════════════════════
+
+const RANGO_DEF = {
+  1:{label:'R1 Kepra Sub',     short:'R1',color:'#E65100'},
+  2:{label:'R2 Kepra Ter',     short:'R2',color:'#1565C0'},
+  3:{label:'R3 Kepra+Dep',     short:'R3',color:'#2E7D32'},
+  4:{label:'R4 Dep+Trip Sub',  short:'R4',color:'#6A1B9A'},
+  5:{label:'R5 Dep+Trip Ter',  short:'R5',color:'#00838F'},
+};
+
+let _dGrafCharts = {};
+
+function buildDailyMedsMap(meds, allDates) {
+  // Returns {date: {kepra, depakene, trileptal}} for all dates
+  const map = {};
+  allDates.forEach(d => map[d] = {kepra:0, depakene:0, trileptal:0});
+  (meds||[]).forEach(med => {
+    const name = (med.name||'').toLowerCase();
+    const doses = [...(med.doses||[])].sort((a,b)=>a.date.localeCompare(b.date));
+    allDates.forEach(date => {
+      if (med.start && date < med.start) return;
+      if (med.end   && date > med.end)   return;
+      const active = doses.filter(d=>d.date<=date).pop();
+      if (!active) return;
+      const val = parseFloat(active.val)||0;
+      if      (name.includes('kepra')||name.includes('levetir'))     map[date].kepra    = val;
+      else if (name.includes('depakene')||name.includes('valp'))     map[date].depakene = val;
+      else if (name.includes('trileptal')||name.includes('oxc'))     map[date].trileptal= val;
+    });
+  });
+  return map;
+}
+
+function getDayRange(dm, pesoKg) {
+  // dm = {kepra, depakene, trileptal} in ml
+  const cl = (drug, ml) => {
+    if (!ml) return null;
+    const mg = ml * PHARMA_DB[drug].conc / pesoKg;
+    if (mg < PHARMA_DB[drug].lo) return 'Sub';
+    if (mg > PHARMA_DB[drug].hi) return 'Supra';
+    return 'Ter';
+  };
+  const ck = cl('Kepra', dm.kepra);
+  const cd = cl('Depakene', dm.depakene);
+  const ct = cl('Trileptal', dm.trileptal);
+  if (ck==='Sub' && !cd && !ct) return 1;
+  if (ck==='Ter' && !cd && !ct) return 2;
+  if (ck && cd && !ct)          return 3;
+  if (!ck && cd && ct==='Sub')  return 4;
+  if (!ck && cd && ct==='Ter')  return 5;
+  return 0;
+}
+
+function renderDGraficos() {
+  const pat = getActivePat();
+  const el = document.getElementById('d-graficos-inner');
+  if (!el) return;
+  if (!pat || !pat.events?.length) {
+    el.innerHTML = '<div class="empty">Seleccioná un paciente con datos para ver los gráficos.</div>';
+    return;
+  }
+
+  Object.values(_dGrafCharts).forEach(c => { try{c.destroy();}catch(e){} });
+  _dGrafCharts = {};
+
+  const pesoKg = pat.weights?.length
+    ? [...pat.weights].sort((a,b)=>a.date.localeCompare(b.date)).slice(-1)[0].kg
+    : 26.5;
+
+  // Build date → range map
+  const allDates = [...new Set(pat.events.map(e=>e.date))].sort();
+  const medMap   = buildDailyMedsMap(pat.meds||[], allDates);
+  const dateToRn = {};
+  allDates.forEach(d => { dateToRn[d] = getDayRange(medMap[d]||{}, pesoKg); });
+
+  // Histogram: crisis/day per range (for bar chart colored by range)
+  const byDate = {};
+  pat.events.forEach(e => { byDate[e.date] = (byDate[e.date]||0)+1; });
+
+  // Probability by hour (all period)
+  const hourCounts = new Array(17).fill(0); // hours 7-23
+  const hourDays   = new Array(17).fill(0);
+  const totalDays  = allDates.length;
+  pat.events.forEach(e => {
+    if (e.hour >= 7 && e.hour <= 23) {
+      hourCounts[e.hour-7]++;
+    }
+  });
+  allDates.forEach(() => {
+    for (let i=0;i<17;i++) hourDays[i]++;
+  });
+  const hourProb = hourCounts.map((v,i) => hourDays[i]>0 ? +(v/hourDays[i]*100).toFixed(1) : 0);
+
+  // Probability by hour per range
+  const rangeHourHist  = {};
+  const rangeDayCounts = {};
+  for (let rn=1; rn<=5; rn++) { rangeHourHist[rn]=new Array(17).fill(0); rangeDayCounts[rn]=0; }
+  pat.events.forEach(e => {
+    const rn = dateToRn[e.date];
+    if (!rn || !rangeHourHist[rn]) return;
+    if (e.hour>=7 && e.hour<=23) rangeHourHist[rn][e.hour-7]++;
+  });
+  allDates.forEach(d => {
+    const rn = dateToRn[d];
+    if (rn && rangeDayCounts[rn]!==undefined) rangeDayCounts[rn]++;
+  });
+
+  const hours = Array.from({length:17},(_,i)=>i+7);
+  const {tc,gc} = getCS();
+
+  el.innerHTML = `
+    <!-- GRÁFICO 1: Histograma por rango -->
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">Crisis diarias por rango terapéutico</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px" id="d-graf-rn-legend"></div>
+      <div style="position:relative;width:100%;height:220px"><canvas id="d-graf-hist"></canvas></div>
+      <div style="font-size:10px;color:var(--t3);text-align:center;margin-top:4px">
+        Cada barra = un día · Color = rango terapéutico activo ese día
+      </div>
+    </div>
+    <!-- GRÁFICO 2: Probabilidad horaria todo el período -->
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">Probabilidad horaria de crisis — período completo</div>
+      <div style="position:relative;width:100%;height:175px"><canvas id="d-graf-prob-all"></canvas></div>
+      <div style="font-size:10px;color:var(--t3);text-align:center;margin-top:4px">
+        % de días en que ocurrió al menos una crisis en esa hora
+      </div>
+    </div>
+    <!-- GRÁFICO 3: Probabilidad horaria por rango (líneas) -->
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">Probabilidad horaria por rango terapéutico</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px" id="d-graf-range-legend"></div>
+      <div style="position:relative;width:100%;height:200px"><canvas id="d-graf-prob-ranges"></canvas></div>
+      <div style="font-size:10px;color:var(--t3);text-align:center;margin-top:4px">
+        Una línea por rango · % días con crisis en esa hora
+      </div>
+    </div>`;
+
+  // Legend for range colors
+  const lgEl = document.getElementById('d-graf-rn-legend');
+  if (lgEl) {
+    Object.entries(RANGO_DEF).forEach(([rn, ri]) => {
+      if (!rangeDayCounts[rn]) return;
+      const span = document.createElement('span');
+      span.style.cssText = `display:flex;align-items:center;gap:4px;font-size:11px;color:var(--t2)`;
+      span.innerHTML = `<span style="width:10px;height:10px;border-radius:2px;background:${ri.color};display:inline-block"></span>${ri.label} (${rangeDayCounts[rn]}d)`;
+      lgEl.appendChild(span);
+    });
+  }
+  const lgEl2 = document.getElementById('d-graf-range-legend');
+  if (lgEl2) {
+    Object.entries(RANGO_DEF).forEach(([rn, ri]) => {
+      if (!rangeDayCounts[rn]) return;
+      const span = document.createElement('span');
+      span.style.cssText = `display:flex;align-items:center;gap:4px;font-size:11px;color:var(--t2)`;
+      span.innerHTML = `<span style="width:16px;border-top:2.5px solid ${ri.color};display:inline-block"></span>${ri.short}`;
+      lgEl2.appendChild(span);
+    });
+  }
+
+  setTimeout(() => {
+    // ── CHART 1: Histograma coloreado por rango ──
+    const histLabels = allDates.map(d => { const p=d.split('-'); return`${+p[2]}/${+p[1]}`; });
+    const histData   = allDates.map(d => byDate[d]||0);
+    const histColors = allDates.map(d => RANGO_DEF[dateToRn[d]]?.color||'#ccc');
+
+    _dGrafCharts['hist'] = new Chart(document.getElementById('d-graf-hist'), {
+      type: 'bar',
+      data: {
+        labels: histLabels,
+        datasets: [{
+          label: 'Crisis/día',
+          data: histData,
+          backgroundColor: histColors,
+          borderColor: histColors.map(c=>c+'CC'),
+          borderWidth: 0.5,
+          borderRadius: 2,
+        }]
+      },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{display:false},
+          tooltip:{callbacks:{
+            title: ctx => allDates[ctx[0].dataIndex],
+            label: ctx => {
+              const rn = dateToRn[allDates[ctx.dataIndex]];
+              return [`${ctx.parsed.y} crisis`, RANGO_DEF[rn]?.label||''];
+            }
+          }}
+        },
+        scales:{
+          x:{ticks:{color:tc,font:{size:8},maxRotation:45,autoSkip:true,maxTicksLimit:allDates.length>60?20:40},
+             grid:{color:gc,lineWidth:.3}},
+          y:{ticks:{color:tc,font:{size:9},precision:0},grid:{color:gc,lineWidth:.5},min:0}
+        }
+      }
+    });
+
+    // ── CHART 2: Probabilidad horaria total ──
+    const maxProb = Math.max(...hourProb, 10);
+    _dGrafCharts['probAll'] = new Chart(document.getElementById('d-graf-prob-all'), {
+      type: 'line',
+      data: {
+        labels: hours.map(h=>h+'h'),
+        datasets: [{
+          label: 'Probabilidad %',
+          data: hourProb,
+          borderColor: '#1565C0',
+          borderWidth: 2.5,
+          backgroundColor: 'rgba(21,101,192,0.08)',
+          fill: true,
+          tension: 0.4,
+          pointRadius: 4,
+          pointBackgroundColor: '#1565C0',
+        }]
+      },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{legend:{display:false},
+          tooltip:{callbacks:{label:ctx=>`${ctx.parsed.y}% de los días`}}
+        },
+        scales:{
+          x:{ticks:{color:tc,font:{size:9}},grid:{color:gc,lineWidth:.5}},
+          y:{ticks:{color:tc,font:{size:9},callback:v=>v+'%'},
+             grid:{color:gc,lineWidth:.5},min:0,max:Math.ceil((maxProb+10)/10)*10}
+        }
+      }
+    });
+
+    // ── CHART 3: Probabilidad horaria por rango (líneas) ──
+    const rangeDatasets = Object.entries(RANGO_DEF)
+      .filter(([rn]) => rangeDayCounts[rn] > 0)
+      .map(([rn, ri]) => {
+        const nDays = rangeDayCounts[rn] || 1;
+        const probs = rangeHourHist[rn].map(v => +(v/nDays*100).toFixed(1));
+        return {
+          label: ri.label,
+          data: probs,
+          borderColor: ri.color,
+          borderWidth: 2,
+          backgroundColor: 'transparent',
+          fill: false,
+          tension: 0.4,
+          pointRadius: 3,
+          pointBackgroundColor: ri.color,
+        };
+      });
+
+    const allProbs = rangeDatasets.flatMap(ds => ds.data);
+    const maxP = Math.max(...allProbs, 10);
+
+    _dGrafCharts['probRanges'] = new Chart(document.getElementById('d-graf-prob-ranges'), {
+      type: 'line',
+      data: { labels: hours.map(h=>h+'h'), datasets: rangeDatasets },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{
+          legend:{display:false},
+          tooltip:{mode:'index',intersect:false,
+            callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.y}%`}
+          }
+        },
+        scales:{
+          x:{ticks:{color:tc,font:{size:9}},grid:{color:gc,lineWidth:.5}},
+          y:{ticks:{color:tc,font:{size:9},callback:v=>v+'%'},
+             grid:{color:gc,lineWidth:.5},min:0,max:Math.ceil((maxP+10)/10)*10}
+        }
+      }
+    });
+  }, 200);
+}
+
+// ════════════════════════════════════════════════════════════
+// IEI — Intervalos Inter-Ictales y Clusters (resumen en Farmacología)
+// ════════════════════════════════════════════════════════════
+
+function computeIEI(events, meds, weightHistory) {
+  if (!events?.length || !meds?.length) return null;
+
+  const pesoKg = weightHistory?.length
+    ? [...weightHistory].sort((a,b)=>a.date.localeCompare(b.date)).slice(-1)[0].kg
+    : 26.5;
+
+  const allDates = [...new Set(events.map(e=>e.date))].sort();
+  const medMap   = buildDailyMedsMap(meds, allDates);
+  const dateToRn = {};
+  allDates.forEach(d => { dateToRn[d] = getDayRange(medMap[d]||{}, pesoKg); });
+
+  // Eventos ordenados con hora fraccional
+  const evsSorted = [...events]
+    .filter(e => e.hour>=7 && e.hour<=23)
+    .sort((a,b) => a.date.localeCompare(b.date)||a.hour-b.hour);
+
+  // IEI diurnos (mismo día) y gaps nocturnos (días consecutivos)
+  const rnData = {};
+  for (let rn=1;rn<=5;rn++) rnData[rn]={ieis:[],nGaps:[],clusters:[],nDays:0,totalCrises:0,freeDays:0};
+
+  // Count days and crises per range
+  allDates.forEach(d => {
+    const rn=dateToRn[d]; if(!rn||!rnData[rn]) return;
+    rnData[rn].nDays++;
+    const dayCrises = events.filter(e=>e.date===d).length;
+    rnData[rn].totalCrises += dayCrises;
+    if (dayCrises===0) rnData[rn].freeDays++;
+  });
+
+  // IEI between consecutive events
+  for (let i=1;i<evsSorted.length;i++) {
+    const prev=evsSorted[i-1], curr=evsSorted[i];
+    const rn=dateToRn[curr.date]; if(!rn||!rnData[rn]) continue;
+    if (prev.date===curr.date) {
+      const iei = (curr.hour+0.5) - (prev.hour+0.5);
+      if (iei>0) rnData[rn].ieis.push(iei);
+    } else {
+      // Nocturnal gap: lower bound only
+      const lb = (23-(prev.hour+0.5)) + 8 + ((curr.hour+0.5)-7);
+      rnData[rn].nGaps.push(lb);
+    }
+  }
+
+  // Clusters (>=2 events within 4h window, same day, diurnal)
+  const byDayRn = {};
+  evsSorted.forEach(e => {
+    const rn=dateToRn[e.date]; if(!rn) return;
+    const key=`${rn}_${e.date}`;
+    if(!byDayRn[key]) byDayRn[key]={rn,date:e.date,hours:[]};
+    byDayRn[key].hours.push(e.hour+0.5);
+  });
+  Object.values(byDayRn).forEach(({rn,date,hours}) => {
+    if(!rnData[rn]) return;
+    const hs=hours.sort((a,b)=>a-b);
+    let i=0;
+    while(i<hs.length) {
+      const cluster=[hs[i]]; let j=i+1;
+      while(j<hs.length && hs[j]-hs[i]<=4) { cluster.push(hs[j]); j++; }
+      if(cluster.length>=2) rnData[rn].clusters.push({n:cluster.length,dur:+(cluster[cluster.length-1]-cluster[0]).toFixed(2)});
+      i = j>i+1 ? j : i+1;
+    }
+  });
+
+  // Summarize
+  const summary = {};
+  const avg = arr => arr.length ? +(arr.reduce((s,v)=>s+v,0)/arr.length).toFixed(2) : null;
+  const med = arr => { if(!arr.length) return null; const s=[...arr].sort((a,b)=>a-b); return +(s[Math.floor(s.length/2)]).toFixed(2); };
+  for (let rn=1;rn<=5;rn++) {
+    const d=rnData[rn];
+    if(!d.nDays) continue;
+    summary[rn]={
+      rn, nDays:d.nDays, totalCrises:d.totalCrises,
+      avgDaily: d.nDays>0 ? +(d.totalCrises/d.nDays).toFixed(2) : 0,
+      freeDays:d.freeDays, freePct:Math.round(d.freeDays/d.nDays*100),
+      ieiMean: avg(d.ieis), ieiMedian: med(d.ieis), ieiN: d.ieis.length,
+      ncN: d.nGaps.length, ncMean: avg(d.nGaps),
+      clN: d.clusters.length,
+      clSizeMean: avg(d.clusters.map(c=>c.n)),
+      clDurMean:  avg(d.clusters.map(c=>c.dur)),
+    };
+  }
+  return summary;
+}
+
+function renderIEISummary(events, meds, weightHistory, containerId) {
+  const el = document.getElementById(containerId); if(!el) return;
+  const summary = computeIEI(events, meds, weightHistory);
+  if(!summary || !Object.keys(summary).length) {
+    el.innerHTML='<div class="empty">Sin datos suficientes para calcular IEI.</div>'; return;
+  }
+
+  const rangesWithData = Object.values(summary).filter(s=>s.nDays>0 && s.totalCrises>0);
+  if(!rangesWithData.length) {
+    el.innerHTML='<div class="empty">Sin crisis registradas para calcular intervalos.</div>'; return;
+  }
+
+  let html = `
+  <div style="background:var(--bg2);border-radius:var(--rm);padding:10px 13px;margin-bottom:12px;font-size:12px;color:var(--t2);line-height:1.7">
+    <strong style="color:var(--t1)">IEI diurno</strong> = tiempo entre crisis consecutivas en horario observable (7h-23h).<br>
+    <strong style="color:var(--t1)">Cluster</strong> = 2 o más crisis en menos de 4 horas.<br>
+    <strong style="color:var(--t1);color:#E65100">⚠ Intervalos nocturnos</strong> = solo límite inferior — no asumen calma durante el sueño.
+  </div>
+  <div style="overflow-x:auto">
+  <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:340px">
+    <thead><tr>
+      ${['Rango','Días','Crisis/día','Días libres','IEI med. (h)','N° clusters','Crisis/cluster'].map(h=>
+        `<th style="text-align:center;padding:6px 7px;background:var(--bg2);color:var(--t2);font-size:10px;text-transform:uppercase;border-bottom:.5px solid var(--bd)">${h}</th>`
+      ).join('')}
+    </tr></thead><tbody>`;
+
+  Object.values(summary).sort((a,b)=>a.rn-b.rn).forEach((s,i) => {
+    const ri = RANGO_DEF[s.rn];
+    if(!ri) return;
+    const bg = i%2===0?'var(--bg2)':'var(--bg)';
+    const avgColor = s.avgDaily<2?'#2E7D32':s.avgDaily<5?'#F59E0B':'#C62828';
+    const freeColor = s.freePct>50?'#2E7D32':s.freePct>20?'#F59E0B':'var(--t2)';
+    const ieiColor = s.ieiMedian==null?'var(--t3)':s.ieiMedian>3?'#2E7D32':s.ieiMedian>1.5?'#F59E0B':'#C62828';
+
+    html += `<tr>
+      <td style="padding:7px 8px;border-bottom:.5px solid var(--bd);border-left:3px solid ${ri.color}">
+        <div style="font-weight:700;font-size:12px;color:var(--t1)">${ri.short}</div>
+        <div style="font-size:10px;color:var(--t2)">${ri.label.replace(/R\d — /,'')}</div>
+      </td>
+      <td style="padding:7px 6px;border-bottom:.5px solid var(--bd);text-align:center;font-size:13px;font-weight:600">${s.nDays}</td>
+      <td style="padding:7px 6px;border-bottom:.5px solid var(--bd);text-align:center;font-size:14px;font-weight:700;color:${avgColor}">${s.avgDaily}</td>
+      <td style="padding:7px 6px;border-bottom:.5px solid var(--bd);text-align:center;font-size:12px;color:${freeColor};font-weight:600">${s.freeDays}d<br><span style="font-size:10px;font-weight:400">(${s.freePct}%)</span></td>
+      <td style="padding:7px 6px;border-bottom:.5px solid var(--bd);text-align:center;font-size:14px;font-weight:700;color:${ieiColor}">${s.ieiMedian!=null?s.ieiMedian+'h':'—'}</td>
+      <td style="padding:7px 6px;border-bottom:.5px solid var(--bd);text-align:center;font-size:13px;font-weight:600">${s.clN}</td>
+      <td style="padding:7px 6px;border-bottom:.5px solid var(--bd);text-align:center;font-size:13px;color:var(--t2)">${s.clSizeMean!=null?s.clSizeMean:'—'}</td>
+    </tr>`;
+  });
+
+  html += `</tbody></table></div>
+  <div style="margin-top:10px;padding:8px 11px;background:var(--bg2);border-radius:var(--rm);font-size:11px;color:var(--t3);line-height:1.6">
+    Los ${Object.values(summary).reduce((s,r)=>s+r.ncN,0)} intervalos nocturnos (cruce de días) son límites inferiores y no se incluyen en el IEI promedio.
+  </div>`;
+
+  el.innerHTML = html;
+}
+
+
 
 
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
