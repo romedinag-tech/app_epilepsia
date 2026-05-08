@@ -356,6 +356,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="card" style="margin-top:11px"><div class="card-title">Modo de uso</div><p class="info-p" style="margin-bottom:10px">Cambiar al modo Doctor para gestionar múltiples pacientes.</p><button class="btn-secondary" onclick="switchRole()">Cambiar a modo Doctor</button></div>
     <div class="card" style="margin-top:11px"><div class="card-title">Información</div><p class="info-p">Versión 2.0 — Datos guardados localmente en el dispositivo.</p></div>
   </div>
+
+  <!-- ACERCA DE NOSOTROS — paciente -->
+  <div id="p-sec-about" class="section">
+    <div class="card" style="margin-bottom:12px">
+      <div style="text-align:center;padding:6px 0 16px">
+        <img src="icons/logo-bg.png" alt="" style="width:60px;height:60px;object-fit:contain;display:block;margin:0 auto 8px" onerror="this.style.display='none'">
+        <div style="font-size:20px;font-weight:800;color:var(--t1)">Epy <span style="color:var(--cf)">Analytics</span></div>
+      </div>
+      <p style="font-size:13px;color:var(--t2);line-height:1.85;margin-bottom:12px">Esta aplicaci&#243;n la hicimos los pap&#225;s de Facundo entre diciembre del 2025 y marzo del 2026, cuando nuestro hijo comenz&#243; con un cuadro de epilepsia focal. Estos gr&#225;ficos nos ayudaron a entender mejor lo que estaba pasando, c&#243;mo evolucionaba y nos permit&#237;a entregarle mejor informaci&#243;n a sus m&#233;dicos.</p>
+      <p style="font-size:13px;color:var(--t2);line-height:1.85;margin-bottom:12px">Esta aplicaci&#243;n tiene por objetivo ayudar y <strong style="color:var(--t1)">no representa en ning&#250;n caso una forma de diagn&#243;stico m&#233;dico</strong>.</p>
+      <div style="background:var(--bg2);border-radius:var(--rm);padding:12px 14px;font-size:12px;color:var(--t2);line-height:1.7">
+        Esta es la base de datos real de Facundo. Con ella pod&#233;s explorar todas las funcionalidades de la aplicaci&#243;n.
+      </div>
+    </div>
+    <button class="btn-primary" style="margin-bottom:9px" onclick="loadFacuIntoApp()">Cargar datos de Facundo</button>
+    <p style="font-size:11px;color:var(--t3);text-align:center;margin-bottom:14px">Dic 2025 - Feb 2026 &middot; 325 crisis &middot; Kepra, Depakene, Trileptal</p>
+    <button class="btn-secondary" style="border-color:#EF4444;color:#EF4444;margin-top:4px" onclick="clearFacuData()">Borrar datos cargados</button>
+    <p style="font-size:11px;color:var(--t3);text-align:center;margin-top:5px">Elimina todos los datos actuales del paciente</p>
+  </div>
 </div>
 
 <!-- ═══ DOCTOR APP ═══ -->
@@ -483,26 +502,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="card" style="margin-top:11px"><div class="card-title">Modo de uso</div><p class="info-p" style="margin-bottom:10px">Cambiar al modo Paciente para el seguimiento personal.</p><button class="btn-secondary" onclick="switchRole()">Cambiar a modo Paciente</button></div>
     <div class="card" style="margin-top:11px"><div class="card-title">Información</div><p class="info-p">Versión 2.0</p></div>
   </div>
-</div>
-
-  <!-- ACERCA DE NOSOTROS — paciente -->
-  <div id="p-sec-about" class="section">
-    <div class="card" style="margin-bottom:12px">
-      <div style="text-align:center;padding:6px 0 16px">
-        <img src="icons/logo-bg.png" alt="" style="width:60px;height:60px;object-fit:contain;display:block;margin:0 auto 8px" onerror="this.style.display='none'">
-        <div style="font-size:20px;font-weight:800;color:var(--t1)">Epy <span style="color:var(--cf)">Analytics</span></div>
-      </div>
-      <p style="font-size:13px;color:var(--t2);line-height:1.85;margin-bottom:12px">Esta aplicación la hicimos los papás de Facundo entre diciembre del 2025 y marzo del 2026, cuando nuestro hijo comenzó con un cuadro de epilepsia focal. Estos gráficos nos ayudaron a entender mejor lo que estaba pasando, cómo evolucionaba y nos permitía entregarle mejor información a sus médicos.</p>
-      <p style="font-size:13px;color:var(--t2);line-height:1.85;margin-bottom:12px">Esta aplicación tiene por objetivo ayudar y <strong style="color:var(--t1)">no representa en ningún caso una forma de diagnóstico médico</strong>.</p>
-      <div style="background:var(--bg2);border-radius:var(--rm);padding:12px 14px;font-size:12px;color:var(--t2);line-height:1.7">
-        Esta es la base de datos real de Facundo. Con ella podés explorar todas las funcionalidades de la aplicación.
-      </div>
-    </div>
-    <button class="btn-primary" style="margin-bottom:9px" onclick="loadFacuIntoApp()">&#128202; Cargar datos de Facundo</button>
-    <p style="font-size:11px;color:var(--t3);text-align:center;margin-bottom:14px">Dic 2025 - Feb 2026 &middot; 325 crisis &middot; Kepra, Depakene, Trileptal</p>
-    <button class="btn-secondary" style="border-color:#EF4444;color:#EF4444" onclick="clearFacuData()">&#128465; Borrar datos cargados</button>
-    <p style="font-size:11px;color:var(--t3);text-align:center;margin-top:5px">Elimina todos los datos actuales del paciente</p>
-  </div>
 
   <!-- ACERCA DE NOSOTROS — doctor -->
   <div id="d-sec-about" class="section">
@@ -511,18 +510,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <img src="icons/logo-bg.png" alt="" style="width:60px;height:60px;object-fit:contain;display:block;margin:0 auto 8px" onerror="this.style.display='none'">
         <div style="font-size:20px;font-weight:800;color:var(--t1)">Epy <span style="color:var(--cf)">Analytics</span></div>
       </div>
-      <p style="font-size:13px;color:var(--t2);line-height:1.85;margin-bottom:12px">Esta aplicación la hicimos los papás de Facundo entre diciembre del 2025 y marzo del 2026, cuando nuestro hijo comenzó con un cuadro de epilepsia focal. Estos gráficos nos ayudaron a entender mejor lo que estaba pasando, cómo evolucionaba y nos permitía entregarle mejor información a sus médicos.</p>
-      <p style="font-size:13px;color:var(--t2);line-height:1.85;margin-bottom:12px">Esta aplicación tiene por objetivo ayudar y <strong style="color:var(--t1)">no representa en ningún caso una forma de diagnóstico médico</strong>.</p>
+      <p style="font-size:13px;color:var(--t2);line-height:1.85;margin-bottom:12px">Esta aplicaci&#243;n la hicimos los pap&#225;s de Facundo entre diciembre del 2025 y marzo del 2026, cuando nuestro hijo comenz&#243; con un cuadro de epilepsia focal. Estos gr&#225;ficos nos ayudaron a entender mejor lo que estaba pasando, c&#243;mo evolucionaba y nos permit&#237;a entregarle mejor informaci&#243;n a sus m&#233;dicos.</p>
+      <p style="font-size:13px;color:var(--t2);line-height:1.85;margin-bottom:12px">Esta aplicaci&#243;n tiene por objetivo ayudar y <strong style="color:var(--t1)">no representa en ning&#250;n caso una forma de diagn&#243;stico m&#233;dico</strong>.</p>
       <div style="background:var(--bg2);border-radius:var(--rm);padding:12px 14px;font-size:12px;color:var(--t2);line-height:1.7">
-        Esta es la base de datos real de Facundo. Con ella podés explorar todas las funcionalidades de la aplicación.
+        Esta es la base de datos real de Facundo. Con ella pod&#233;s explorar todas las funcionalidades de la aplicaci&#243;n.
       </div>
     </div>
-    <button class="btn-primary" style="margin-bottom:9px" onclick="loadFacuIntoDoctor()">&#128202; Cargar datos de Facundo</button>
+    <button class="btn-primary" style="margin-bottom:9px" onclick="loadFacuIntoDoctor()">Cargar datos de Facundo</button>
     <p style="font-size:11px;color:var(--t3);text-align:center;margin-bottom:14px">Crea el paciente &quot;Facundo&quot; con su historial completo</p>
-    <button class="btn-secondary" style="border-color:#EF4444;color:#EF4444" onclick="clearFacuDoctor()">&#128465; Borrar paciente Facundo</button>
+    <button class="btn-secondary" style="border-color:#EF4444;color:#EF4444;margin-top:4px" onclick="clearFacuDoctor()">Borrar paciente Facundo</button>
     <p style="font-size:11px;color:var(--t3);text-align:center;margin-top:5px">Elimina a Facundo de la lista de pacientes</p>
   </div>
-
+</div>
 
 <!-- DIALOGS -->
 <div class="overlay" id="confirm-overlay"><div class="dialog"><h3 id="dlg-title">Registrar ataque</h3><div class="time-big" id="dlg-time">--:--</div><p>¿Confirmás el registro?</p><div class="dbtn-row"><button class="dbtn-cancel" onclick="closeConfirm()">Cancelar</button><button class="dbtn-ok" onclick="confirmAttack()">Confirmar</button></div></div></div>
@@ -1599,8 +1598,7 @@ function loadFacuIntoApp() {
   G.patient.profile.name = FACU_DATA.paciente;
   G.patient.profile.dob  = FACU_DATA.dob || '';
   G.patient.importedFiles = [{name:'facu_datos.epilepsia',count:325,date:todayStr()}];
-  save();
-  launchPatient();
+  save(); launchPatient();
   showToast('Datos de Facundo cargados');
 }
 
@@ -1609,8 +1607,7 @@ function clearFacuData() {
   G.patient.events = [];
   G.patient.meds   = [];
   G.patient.importedFiles = [];
-  save();
-  launchPatient();
+  save(); launchPatient();
   showToast('Datos eliminados');
 }
 
@@ -1619,34 +1616,26 @@ function loadFacuIntoDoctor() {
   var PAT_COLORS=['#4A90D9','#E05252','#27AE60','#E67E22','#7B6FD0','#D4537E'];
   var p = G.doctor.patients.find(function(x){return x.name==='Facundo';});
   if (p) {
-    p.events = FACU_DATA.events;
-    p.meds   = FACU_DATA.meds;
-    p.dob    = FACU_DATA.dob || '';
-    p.fileInfo = {name:'facu_datos.epilepsia',count:325,date:todayStr()};
-    activeDoctorPatId = p.id;
+    p.events=FACU_DATA.events; p.meds=FACU_DATA.meds; p.dob=FACU_DATA.dob||'';
+    p.fileInfo={name:'facu_datos.epilepsia',count:325,date:todayStr()};
+    activeDoctorPatId=p.id;
   } else {
-    var np = {
-      id:Date.now(), name:'Facundo', dob:FACU_DATA.dob||'', diag:'Epilepsia focal',
-      events:FACU_DATA.events, meds:FACU_DATA.meds,
+    var np={id:Date.now(),name:'Facundo',dob:FACU_DATA.dob||'',diag:'Epilepsia focal',
+      events:FACU_DATA.events,meds:FACU_DATA.meds,
       fileInfo:{name:'facu_datos.epilepsia',count:325,date:todayStr()},
-      color:PAT_COLORS[G.doctor.patients.length % PAT_COLORS.length]
-    };
+      color:PAT_COLORS[G.doctor.patients.length%PAT_COLORS.length]};
     G.doctor.patients.push(np);
-    activeDoctorPatId = np.id;
+    activeDoctorPatId=np.id;
   }
-  save();
-  renderDPatList();
-  renderDView();
+  save(); renderDPatList(); renderDView();
   showToast('Datos de Facundo cargados');
 }
 
 function clearFacuDoctor() {
   if (!confirm('Eliminar al paciente Facundo?')) return;
-  G.doctor.patients = G.doctor.patients.filter(function(p){return p.name!=='Facundo';});
-  if (!G.doctor.patients.find(function(p){return p.id===activeDoctorPatId;})) activeDoctorPatId = null;
-  save();
-  renderDPatList();
-  renderDView();
+  G.doctor.patients=G.doctor.patients.filter(function(p){return p.name!=='Facundo';});
+  if(!G.doctor.patients.find(function(p){return p.id===activeDoctorPatId;})) activeDoctorPatId=null;
+  save(); renderDPatList(); renderDView();
   showToast('Paciente Facundo eliminado');
 }
 
