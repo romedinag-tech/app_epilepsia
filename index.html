@@ -642,6 +642,33 @@ function getCS(){const isDark=matchMedia('(prefers-color-scheme:dark)').matches;
 function selectRole(role){G.role=role;save();document.getElementById('role-screen').style.display='none';if(role==='patient'){if(G.patient.profile.name)launchPatient();else{document.getElementById('setup-patient').style.display='flex';buildColorPicker('s-colors','sky','pickPatColor');}}else{if(G.doctor.profile.name)launchDoctor();else{document.getElementById('setup-doctor').style.display='flex';buildColorPicker('d-colors','slate','pickDocColor');}}}
 function switchRole(){const nr=G.role==='patient'?'doctor':'patient';G.role=nr;save();document.getElementById('app-patient').style.display='none';document.getElementById('app-doctor').style.display='none';selectRole(nr);}
 
+// DOCTOR PROFILE
+function pickDocColor(id,cid){G.doctor.profile.colorId=id;document.querySelectorAll('#'+cid+' .cdot').forEach(d=>d.classList.toggle('sel',d.dataset.id===id));}
+function saveDoctorProfile(){const name=document.getElementById('d-name').value.trim();if(!name)return;G.doctor.profile={name,spec:document.getElementById('d-spec').value.trim(),colorId:G.doctor.profile.colorId||'sky'};save();document.getElementById('setup-doctor').style.display='none';launchDoctor();}
+function launchDoctor(){
+  document.getElementById('app-doctor').style.display='block';
+  document.getElementById('app-patient').style.display='none';
+  const sl=document.getElementById('shared-logo');if(sl)sl.style.display='flex';
+  const d=G.doctor.profile;
+  document.getElementById('d-topname').textContent=d.name||'Doctor';
+  document.getElementById('d-topspec').textContent=d.spec||'';
+  const cfg_name=document.getElementById('d-cfg-name');if(cfg_name)cfg_name.value=d.name||'';
+  const cfg_spec=document.getElementById('d-cfg-spec');if(cfg_spec)cfg_spec.value=d.spec||'';
+  buildColorPicker('d-cfg-colors',d.colorId||'sky','pickDocColor');
+  renderDPatList();renderDCompareSlots();
+}
+function saveDCfg(){const name=document.getElementById('d-cfg-name').value.trim();if(!name)return;G.doctor.profile={name,spec:document.getElementById('d-cfg-spec').value.trim(),colorId:G.doctor.profile.colorId||'sky'};save();launchDoctor();showToast('Perfil guardado ✓');}
+function dTab(t,btn){
+  document.querySelectorAll('#app-doctor .section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('#app-doctor .tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('d-sec-'+t).classList.add('active');
+  btn.classList.add('active');
+  if(t==='view')renderDView();
+  if(t==='pharma')renderDPharma();
+  if(t==='compare')renderDCompareSlots();
+}
+
+
 // PATIENT PROFILE
 function pickPatColor(id,cid){SC=getC(id);document.querySelectorAll(`#${cid} .cdot`).forEach(d=>d.classList.toggle('sel',d.dataset.id===id));applyTheme();}
 function savePatientProfile(){const name=document.getElementById('s-name').value.trim();if(!name)return;G.patient.profile={name,dob:document.getElementById('s-dob').value,colorId:SC.id};save();document.getElementById('setup-patient').style.display='none';launchPatient();}
