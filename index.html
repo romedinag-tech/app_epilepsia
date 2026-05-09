@@ -1400,7 +1400,7 @@ function launchDoctor(){
   renderDCompareSlots();
 }
 function saveDCfg(){const name=document.getElementById('d-cfg-name').value.trim();if(!name)return;G.doctor.profile={name,spec:document.getElementById('d-cfg-spec').value.trim(),colorId:G.doctor.profile.colorId||'slate'};save();launchDoctor();showToast('Perfil guardado ✓');}
-function dTab(t,btn){document.querySelectorAll('#app-doctor .section').forEach(s=>s.classList.remove('active'));document.querySelectorAll('#app-doctor .tab').forEach(b=>b.classList.remove('active'));var _ds=document.getElementById('d-sec-'+t);if(_ds)_ds.classList.add('active');btn.classList.add('active');if(t==='view')renderDView();if(t==='graficos')renderDGraficos();if(t==='pharma')renderDPharma();if(t==='compare')renderDCompareSlots();}
+function dTab(t,btn){document.querySelectorAll('#app-doctor .section').forEach(s=>s.classList.remove('active'));document.querySelectorAll('#app-doctor .tab').forEach(b=>b.classList.remove('active'));var _ds=document.getElementById('d-sec-'+t);if(_ds)_ds.classList.add('active');if(btn)btn.classList.add('active');if(t==='view')renderDView();if(t==='graficos')renderDGraficos();if(t==='pharma')renderDPharma();if(t==='compare')renderDCompareSlots();}
 
 // DOCTOR PATIENTS
 let dMedDoses=[];
@@ -1452,7 +1452,7 @@ function renderDMedList(){
 function toggleAddPatForm(){const f=document.getElementById('d-add-pat-form'),o=f.style.display==='block';f.style.display=o?'none':'block';if(!o){document.getElementById('np-name').value='';document.getElementById('np-dob').value='';document.getElementById('np-diag').value='';document.getElementById('np-age').textContent='';}}
 function addPatient(){const name=document.getElementById('np-name').value.trim();if(!name){showToast('Ingresá el nombre');return;}const pat={id:Date.now(),name,dob:document.getElementById('np-dob').value,diag:document.getElementById('np-diag').value.trim(),events:[],fileInfo:null,color:PAT_COLORS[G.doctor.patients.length%PAT_COLORS.length]};G.doctor.patients.push(pat);save();renderDPatList();renderDCompareSlots();document.getElementById('d-add-pat-form').style.display='none';showToast('Paciente agregado ✓');}
 function renderDPatList(){const list=document.getElementById('d-pat-list');if(!G.doctor.patients.length){list.innerHTML='<div class="empty">Sin pacientes agregados</div>';return;}list.innerHTML=G.doctor.patients.map(p=>`<div class="pat-card${activeDoctorPatId===p.id?' active-pat':''}" onclick="selectDPat(${p.id})"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div><div style="font-size:15px;font-weight:600;color:${activeDoctorPatId===p.id?'var(--ct)':'var(--t1)'}"><span style="width:9px;height:9px;border-radius:50%;background:${p.color};display:inline-block;margin-right:6px;vertical-align:middle"></span>${p.name}</div><div style="font-size:11px;color:var(--t2);margin-top:2px">${p.dob?calcAge(p.dob)+' · ':''}${p.diag||'Sin diagnóstico'}</div>${p.fileInfo?`<div style="font-size:11px;color:var(--t3);margin-top:2px">📄 ${p.fileInfo.name} · ${p.fileInfo.count} ataques</div>`:'<div style="font-size:11px;color:var(--t3);margin-top:2px">Sin datos cargados</div>'}</div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px">${p.events.length?`<span style="font-size:11px;padding:2px 8px;border-radius:12px;background:var(--cl);color:var(--ct);font-weight:600">${p.events.length}</span>`:''}<button onclick="event.stopPropagation();askDelPat(${p.id})" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:11px">Eliminar</button></div></div></div>`).join('');}
-function selectDPat(id){activeDoctorPatId=id;renderDPatList();renderDView();document.querySelectorAll('#app-doctor .section').forEach(s=>s.classList.remove('active'));document.querySelectorAll('#app-doctor .tab').forEach(b=>b.classList.remove('active'));document.getElementById('d-sec-view').classList.add('active');document.querySelectorAll('#app-doctor .tab')[1].classList.add('active');}
+function selectDPat(id){activeDoctorPatId=id;save();renderDPatList();const btn=document.querySelector('#app-doctor .tab-bar .tab:nth-child(3)');dTab('view',btn||document.querySelector('#app-doctor .tab-bar .tab'));}
 function askDelPat(id){const p=G.doctor.patients.find(x=>x.id===id);if(!p)return;pendingDeleteCb=()=>{G.doctor.patients=G.doctor.patients.filter(x=>x.id!==id);if(activeDoctorPatId===id)activeDoctorPatId=null;save();renderDPatList();renderDView();renderDCompareSlots();showToast('Eliminado');};document.getElementById('del-msg').textContent=`¿Eliminar a ${p.name} y todos sus datos?`;document.getElementById('delete-overlay').classList.add('open');}
 function getActivePat(){return G.doctor.patients.find(p=>p.id===activeDoctorPatId)||null;}
 
@@ -1612,8 +1612,10 @@ function loadFacuIntoDoctor() {
     G.doctor.patients.push(np);
     activeDoctorPatId=np.id;
   }
-  save(); renderDPatList(); renderDView();
-  showToast('Datos de Facundo cargados');
+  save(); renderDPatList();
+  const _btn=document.querySelector('#app-doctor .tab-bar .tab:nth-child(3)');
+  if(_btn) dTab('view',_btn); else renderDView();
+  showToast('Datos de Facundo cargados ✓');
 }
 
 function clearFacuDoctor() {
