@@ -364,8 +364,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <img src="icons/logo-bg.png" alt="" style="width:60px;height:60px;object-fit:contain;display:block;margin:0 auto 8px" onerror="this.style.display='none'">
         <div style="font-size:20px;font-weight:800;color:var(--t1)">Epy <span style="color:var(--cf)">Analytics</span></div>
       </div>
-      <p style="font-size:13px;color:var(--t2);line-height:1.85;margin-bottom:12px;text-align:justify;font-style:italic">Esta aplicaci&#243;n la hicimos los pap&#225;s de Facundo entre diciembre del 2025 y marzo del 2026, cuando nuestro hijo comenz&#243; con un cuadro de epilepsia focal. Estos gr&#225;ficos nos ayudaron a entender mejor lo que estaba pasando, c&#243;mo evolucionaba y nos permit&#237;a entregarle mejor informaci&#243;n a sus m&#233;dicos.</p>
-      <p style="font-size:13px;color:var(--t2);line-height:1.85;margin-bottom:12px;text-align:justify;font-style:italic">Esta aplicaci&#243;n tiene por objetivo ayudar y <strong style="color:var(--t1)">no representa en ning&#250;n caso una forma de diagn&#243;stico m&#233;dico</strong>.</p>
+      <p style="font-size:13px;color:var(--t2);line-height:1.85;margin-bottom:12px">Esta aplicaci&#243;n la hicimos los pap&#225;s de Facundo entre diciembre del 2025 y marzo del 2026, cuando nuestro hijo comenz&#243; con un cuadro de epilepsia focal. Estos gr&#225;ficos nos ayudaron a entender mejor lo que estaba pasando, c&#243;mo evolucionaba y nos permit&#237;a entregarle mejor informaci&#243;n a sus m&#233;dicos.</p>
+      <p style="font-size:13px;color:var(--t2);line-height:1.85;margin-bottom:12px">Esta aplicaci&#243;n tiene por objetivo ayudar y <strong style="color:var(--t1)">no representa en ning&#250;n caso una forma de diagn&#243;stico m&#233;dico</strong>.</p>
       <div style="background:var(--bg2);border-radius:var(--rm);padding:12px 14px;font-size:12px;color:var(--t2);line-height:1.7">
         Esta es la base de datos real de Facundo. Con ella pod&#233;s explorar todas las funcionalidades de la aplicaci&#243;n.
       </div>
@@ -393,14 +393,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <span class="badge" id="d-pat-badge" style="background:#EEF3FA;color:#34587A;font-size:11px">Sin paciente</span>
   </div>
   <div class="tab-bar">
-    <button class="tab active" onclick="dTab('dperf',this)">Perfil</button>
-    <button class="tab" onclick="dTab('patients',this)">Pacientes</button>
+    <button class="tab active" onclick="dTab('patients',this)">Pacientes</button>
     <button class="tab" onclick="dTab('view',this)">Ver datos</button>
     <button class="tab" onclick="dTab('graficos',this)">Gráficos</button>
     <button class="tab" onclick="dTab('pharma',this)">Farmacología</button>
+    <button class="tab" onclick="dTab('compare',this)">Comparar</button>
+    <button class="tab" onclick="dTab('dperf',this)">Perfil</button>
     <button class="tab" onclick="dTab('about',this)">Nosotros</button>
   </div>
-  <div id="d-sec-patients" class="section">
+  <div id="d-sec-patients" class="section active">
     <div id="d-pat-list"><div class="empty">Sin pacientes agregados</div></div>
     <button class="btn-secondary" style="margin-top:4px" onclick="toggleAddPatForm()">+ Agregar paciente</button>
     <div class="add-form" id="d-add-pat-form" style="display:none;margin-top:10px">
@@ -421,18 +422,61 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <div class="import-result" id="d-import-res"></div>
         <div id="d-file-info" style="display:none;margin-top:8px;padding:8px 10px;background:var(--bg2);border-radius:var(--rm);font-size:12px;color:var(--t2)"></div>
       </div>
-
-
+      <!-- Medicamentos del paciente (modo doctor) -->
+      <div class="card">
+        <div class="card-title">Medicamentos del paciente</div>
+        <div id="d-med-list"><div class="empty" style="padding:8px 0">Sin medicamentos</div></div>
+        <button class="btn-secondary" style="margin-top:8px" onclick="toggleDMedForm()">+ Agregar medicamento</button>
+        <div class="add-form" id="d-med-form" style="display:none">
+          <div class="field">
+            <label>Fármaco</label>
+            <select id="dm-drug-select" onchange="onDrugSelectD()" style="width:100%;padding:8px 10px;border:0.5px solid var(--bd2);border-radius:var(--rm);font-size:13px;background:var(--bg);color:var(--t1)">
+              <option value="">— Seleccioná un fármaco —</option>
+            </select>
+          </div>
+          <div id="dm-drug-info" style="display:none;background:var(--bg3);border-radius:var(--rm);padding:9px 11px;margin-bottom:10px;font-size:11px;color:var(--t2);line-height:1.6"></div>
+          <div style="display:flex;gap:8px;margin-bottom:10px">
+            <div class="field" style="flex:1;margin-bottom:0"><label>Fecha de inicio</label><input type="date" id="dm-start-date"></div>
+            <div class="field" style="flex:1;margin-bottom:0">
+              <label id="dm-dose-label">Dosis diaria (ml/día)</label>
+              <input type="number" id="dm-start-dose" placeholder="Ej: 4" min="0" step="0.5" oninput="calcMgKgD('dm-start-dose','dm-start-mgkg')">
+            </div>
+          </div>
+          <div id="dm-start-mgkg" style="display:none;margin-bottom:10px;padding:8px 11px;border-radius:var(--rm);font-size:12px;font-weight:600;text-align:center"></div>
+          <div style="border-top:0.5px solid var(--bd);padding-top:9px;margin-bottom:8px">
+            <div style="font-size:11px;font-weight:600;color:var(--t2);margin-bottom:8px">CAMBIOS DE DOSIS <span style="font-weight:400;color:var(--t3)">(opcional)</span></div>
+            <div id="dm-doses" style="margin-bottom:8px"></div>
+            <div style="display:flex;gap:7px;align-items:flex-end">
+              <div class="field" style="flex:1;margin-bottom:0"><label>Desde</label><input type="date" id="dm-date"></div>
+              <div class="field" style="flex:1;margin-bottom:0">
+                <label>Nueva dosis (ml/día)</label>
+                <input type="number" id="dm-dose" placeholder="Ej: 6" min="0" step="0.5" oninput="calcMgKgD('dm-dose','dm-change-mgkg')">
+              </div>
+              <button onclick="addDDose()" style="padding:8px 12px;border:none;border-radius:var(--rm);background:var(--cf);color:#fff;font-size:14px;font-weight:700;cursor:pointer;flex-shrink:0">+</button>
+            </div>
+            <div id="dm-change-mgkg" style="display:none;margin-top:5px;padding:6px 10px;border-radius:var(--rm);font-size:11px;font-weight:600"></div>
+          </div>
+          <button class="btn-primary" onclick="saveDMed()">Guardar medicamento</button>
+        </div>
+      </div>
+      <div class="card" style="padding:11px 14px">
+        <div class="card-title">Período</div>
+        <div class="ctrl-btns" id="d-range-btns"><button class="ctrl-btn active" onclick="dSetRange('all',this)">Todo</button><button class="ctrl-btn" onclick="dSetRange(15,this)">15d</button><button class="ctrl-btn" onclick="dSetRange(30,this)">30d</button><button class="ctrl-btn" onclick="dSetRange(60,this)">60d</button><button class="ctrl-btn" id="d-libre-btn" onclick="dOpenCustom(this)">Libre</button></div>
+        <div class="range-label" id="d-range-label"></div>
+      </div>
       <div class="stats-grid">
         <div class="stat"><div class="lbl">Total</div><div class="val" id="d-st-total">0</div><div class="sub">ataques</div></div>
         <div class="stat"><div class="lbl">Promedio</div><div class="val" id="d-st-avg">—</div><div class="sub">por día</div></div>
         <div class="stat"><div class="lbl">Mejor día</div><div class="val" id="d-st-best">—</div><div class="sub">menos ataques</div></div>
         <div class="stat"><div class="lbl">Peor día</div><div class="val" id="d-st-worst">—</div><div class="sub">más ataques</div></div>
       </div>
-      <!-- RESUMEN DE TENDENCIA -->
-      <div class="card" id="d-trend-card" style="display:none;margin-top:2px">
-        <div class="card-title">Tendencia del tratamiento</div>
-        <div id="d-trend-content"></div>
+      
+      
+      <div style="display:flex;justify-content:flex-end;margin-bottom:4px">
+        <button onclick="shareChartsAsImage('d')" style="display:flex;align-items:center;gap:5px;padding:7px 14px;border:0.5px solid var(--bd2);border-radius:20px;background:var(--bg);color:var(--t2);font-size:12px;font-weight:500;cursor:pointer">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+          Compartir como foto
+        </button>
       </div>
     </div>
   </div>
@@ -457,7 +501,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div id="d-comp-summary" style="margin-top:10px;font-size:12px;color:var(--t2);line-height:1.8"></div>
     </div>
   </div>
-  <div id="d-sec-dperf" class="section active">
+  <div id="d-sec-dperf" class="section">
     <div class="card">
       <div class="card-title">Perfil del doctor</div>
       <div class="field"><label>Nombre</label><input type="text" id="d-cfg-name" maxlength="40" autocomplete="off"></div>
@@ -476,8 +520,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <img src="icons/logo-bg.png" alt="" style="width:60px;height:60px;object-fit:contain;display:block;margin:0 auto 8px" onerror="this.style.display='none'">
         <div style="font-size:20px;font-weight:800;color:var(--t1)">Epy <span style="color:var(--cf)">Analytics</span></div>
       </div>
-      <p style="font-size:13px;color:var(--t2);line-height:1.85;margin-bottom:12px;text-align:justify;font-style:italic">Esta aplicaci&#243;n la hicimos los pap&#225;s de Facundo entre diciembre del 2025 y marzo del 2026, cuando nuestro hijo comenz&#243; con un cuadro de epilepsia focal. Estos gr&#225;ficos nos ayudaron a entender mejor lo que estaba pasando, c&#243;mo evolucionaba y nos permit&#237;a entregarle mejor informaci&#243;n a sus m&#233;dicos.</p>
-      <p style="font-size:13px;color:var(--t2);line-height:1.85;margin-bottom:12px;text-align:justify;font-style:italic">Esta aplicaci&#243;n tiene por objetivo ayudar y <strong style="color:var(--t1)">no representa en ning&#250;n caso una forma de diagn&#243;stico m&#233;dico</strong>.</p>
+      <p style="font-size:13px;color:var(--t2);line-height:1.85;margin-bottom:12px">Esta aplicaci&#243;n la hicimos los pap&#225;s de Facundo entre diciembre del 2025 y marzo del 2026, cuando nuestro hijo comenz&#243; con un cuadro de epilepsia focal. Estos gr&#225;ficos nos ayudaron a entender mejor lo que estaba pasando, c&#243;mo evolucionaba y nos permit&#237;a entregarle mejor informaci&#243;n a sus m&#233;dicos.</p>
+      <p style="font-size:13px;color:var(--t2);line-height:1.85;margin-bottom:12px">Esta aplicaci&#243;n tiene por objetivo ayudar y <strong style="color:var(--t1)">no representa en ning&#250;n caso una forma de diagn&#243;stico m&#233;dico</strong>.</p>
       <div style="background:var(--bg2);border-radius:var(--rm);padding:12px 14px;font-size:12px;color:var(--t2);line-height:1.7">
         Esta es la base de datos real de Facundo. Con ella pod&#233;s explorar todas las funcionalidades de la aplicaci&#243;n.
       </div>
@@ -560,14 +604,10 @@ const PAT_COLORS=['#4A90D9','#E05252','#27AE60','#E67E22','#7B6FD0','#D4537E'];
 const MED_COLORS=['#E05252','#27AE60','#E67E22','#7B6FD0','#2980B9','#D4537E'];
 const MED_DASH=[[],[5,3],[2,2],[4,2,1,2],[6,2],[3,3]];
 
-let G={role:null,patient:{events:[],meds:[],weights:[],medVisible:{},importedFiles:[],profile:{name:'',dob:'',colorId:'sky',photo:''}},doctor:{profile:{name:'',spec:'',colorId:'slate'},patients:[],activePatId:null}};
+let G={role:null,patient:{events:[],meds:[],medVisible:{},importedFiles:[],profile:{name:'',dob:'',colorId:'sky'}},doctor:{profile:{name:'',spec:'',colorId:'slate'},patients:[]}};
 let SC=PAL[0];
 let pRange='all',dRange='all',pCustomBtn=null,dCustomBtn=null;
-let _activeDoctorPatId=null;
-Object.defineProperty(window,'activeDoctorPatId',{
-  get:()=>_activeDoctorPatId!==null?_activeDoctorPatId:(G?.doctor?.activePatId||null),
-  set:(v)=>{_activeDoctorPatId=v;if(G?.doctor)G.doctor.activePatId=v;}
-});
+let activeDoctorPatId=null;
 let pendingDeleteCb=null;
 let charts={pMain:null,pProb:null,pComp:null,dMain:null,dProb:null,dCompHist:null,dCompProb:null};
 let pMedDoses=[],dCompRanges={};
@@ -576,7 +616,7 @@ function pad(n){return String(n).padStart(2,'0');}
 function todayStr(){const d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
 function fmtS(s){if(!s)return'';const p=s.split('-');const ms=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];return`${+p[2]}/${ms[+p[1]-1]}`;}
 function calcAge(dob){if(!dob)return'';const b=new Date(dob),n=new Date();let y=n.getFullYear()-b.getFullYear(),mo=n.getMonth()-b.getMonth();if(mo<0){y--;mo+=12;}if(n.getDate()<b.getDate())mo--;if(mo<0){y--;mo+=11;}if(y<0)return'';if(y===0)return`${mo} mes${mo!==1?'es':''}`;return mo===0?`${y} año${y>1?'s':''}`:`${y}a ${mo}m`;}
-function load(){try{const r=localStorage.getItem(SK);if(r){G=JSON.parse(r);if(!G.patient.medVisible)G.patient.medVisible={};if(!G.patient.importedFiles)G.patient.importedFiles=[];if(!G.patient.weights)G.patient.weights=[];if(!G.doctor.patients)G.doctor.patients=[];if(G.doctor.activePatId===undefined)G.doctor.activePatId=null;G.doctor.patients.forEach(p=>{if(!p.weights)p.weights=[];if(!p.meds)p.meds=[];});}}catch(e){}}
+function load(){try{const r=localStorage.getItem(SK);if(r){G=JSON.parse(r);if(!G.patient.medVisible)G.patient.medVisible={};if(!G.patient.importedFiles)G.patient.importedFiles=[];if(!G.doctor.patients)G.doctor.patients=[];}}catch(e){}}
 function save(){try{localStorage.setItem(SK,JSON.stringify(G));}catch(e){}}
 function getC(id){return PAL.find(c=>c.id===id)||PAL[0];}
 function buildColorPicker(cid,selId,onpick){document.getElementById(cid).innerHTML=PAL.map(c=>`<div class="cdot${c.id===selId?' sel':''}" style="background:${c.fill}" data-id="${c.id}" onclick="(${onpick})('${c.id}','${cid}')"></div>`).join('');}
@@ -1383,24 +1423,9 @@ function downloadTemplate(){const wb=XLSX.utils.book_new();const inst=[["PLANTIL
 // DOCTOR PROFILE
 function pickDocColor(id,cid){G.doctor.profile.colorId=id;document.querySelectorAll(`#${cid} .cdot`).forEach(d=>d.classList.toggle('sel',d.dataset.id===id));}
 function saveDoctorProfile(){const name=document.getElementById('d-name').value.trim();if(!name)return;G.doctor.profile={name,spec:document.getElementById('d-spec').value.trim(),colorId:G.doctor.profile.colorId||'slate'};save();document.getElementById('setup-doctor').style.display='none';launchDoctor();}
-function launchDoctor(){
-  document.getElementById('app-doctor').style.display='block';
-  document.getElementById('app-patient').style.display='none';
-  const d=G.doctor.profile;
-  document.getElementById('d-topname').textContent=d.name||'Doctor';
-  document.getElementById('d-topspec').textContent=d.spec||'';
-  const cn=document.getElementById('d-cfg-name');if(cn)cn.value=d.name||'';
-  const cs=document.getElementById('d-cfg-spec');if(cs)cs.value=d.spec||'';
-  buildColorPicker('d-cfg-colors',d.colorId||'slate','pickDocColor');
-  // Restaurar paciente activo desde G
-  if(G.doctor.activePatId){
-    _activeDoctorPatId=G.doctor.activePatId;
-  }
-  renderDPatList();
-  renderDCompareSlots();
-}
+function launchDoctor(){document.getElementById('app-doctor').style.display='block';document.getElementById('app-patient').style.display='none';const d=G.doctor.profile;document.getElementById('d-topname').textContent=d.name||'Doctor';document.getElementById('d-topspec').textContent=d.spec||'';document.getElementById('d-cfg-name').value=d.name||'';document.getElementById('d-cfg-spec').value=d.spec||'';buildColorPicker('d-cfg-colors',d.colorId||'slate','pickDocColor');renderDPatList();renderDCompareSlots();}
 function saveDCfg(){const name=document.getElementById('d-cfg-name').value.trim();if(!name)return;G.doctor.profile={name,spec:document.getElementById('d-cfg-spec').value.trim(),colorId:G.doctor.profile.colorId||'slate'};save();launchDoctor();showToast('Perfil guardado ✓');}
-function dTab(t,btn){document.querySelectorAll('#app-doctor .section').forEach(s=>s.classList.remove('active'));document.querySelectorAll('#app-doctor .tab').forEach(b=>b.classList.remove('active'));var _ds=document.getElementById('d-sec-'+t);if(_ds)_ds.classList.add('active');if(btn)btn.classList.add('active');if(t==='view')renderDView();if(t==='graficos')renderDGraficos();if(t==='pharma')renderDPharma();if(t==='compare')renderDCompareSlots();}
+function dTab(t,btn){document.querySelectorAll('#app-doctor .section').forEach(s=>s.classList.remove('active'));document.querySelectorAll('#app-doctor .tab').forEach(b=>b.classList.remove('active'));var _ds=document.getElementById('d-sec-'+t);if(_ds)_ds.classList.add('active');btn.classList.add('active');if(t==='view')renderDView();if(t==='graficos')renderDGraficos();if(t==='pharma')renderDPharma();if(t==='compare')renderDCompareSlots();}
 
 // DOCTOR PATIENTS
 let dMedDoses=[];
@@ -1452,7 +1477,7 @@ function renderDMedList(){
 function toggleAddPatForm(){const f=document.getElementById('d-add-pat-form'),o=f.style.display==='block';f.style.display=o?'none':'block';if(!o){document.getElementById('np-name').value='';document.getElementById('np-dob').value='';document.getElementById('np-diag').value='';document.getElementById('np-age').textContent='';}}
 function addPatient(){const name=document.getElementById('np-name').value.trim();if(!name){showToast('Ingresá el nombre');return;}const pat={id:Date.now(),name,dob:document.getElementById('np-dob').value,diag:document.getElementById('np-diag').value.trim(),events:[],fileInfo:null,color:PAT_COLORS[G.doctor.patients.length%PAT_COLORS.length]};G.doctor.patients.push(pat);save();renderDPatList();renderDCompareSlots();document.getElementById('d-add-pat-form').style.display='none';showToast('Paciente agregado ✓');}
 function renderDPatList(){const list=document.getElementById('d-pat-list');if(!G.doctor.patients.length){list.innerHTML='<div class="empty">Sin pacientes agregados</div>';return;}list.innerHTML=G.doctor.patients.map(p=>`<div class="pat-card${activeDoctorPatId===p.id?' active-pat':''}" onclick="selectDPat(${p.id})"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div><div style="font-size:15px;font-weight:600;color:${activeDoctorPatId===p.id?'var(--ct)':'var(--t1)'}"><span style="width:9px;height:9px;border-radius:50%;background:${p.color};display:inline-block;margin-right:6px;vertical-align:middle"></span>${p.name}</div><div style="font-size:11px;color:var(--t2);margin-top:2px">${p.dob?calcAge(p.dob)+' · ':''}${p.diag||'Sin diagnóstico'}</div>${p.fileInfo?`<div style="font-size:11px;color:var(--t3);margin-top:2px">📄 ${p.fileInfo.name} · ${p.fileInfo.count} ataques</div>`:'<div style="font-size:11px;color:var(--t3);margin-top:2px">Sin datos cargados</div>'}</div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px">${p.events.length?`<span style="font-size:11px;padding:2px 8px;border-radius:12px;background:var(--cl);color:var(--ct);font-weight:600">${p.events.length}</span>`:''}<button onclick="event.stopPropagation();askDelPat(${p.id})" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:11px">Eliminar</button></div></div></div>`).join('');}
-function selectDPat(id){activeDoctorPatId=id;save();renderDPatList();const btn=document.querySelector('#app-doctor .tab-bar .tab:nth-child(3)');dTab('view',btn||document.querySelector('#app-doctor .tab-bar .tab'));}
+function selectDPat(id){activeDoctorPatId=id;renderDPatList();renderDView();document.querySelectorAll('#app-doctor .section').forEach(s=>s.classList.remove('active'));document.querySelectorAll('#app-doctor .tab').forEach(b=>b.classList.remove('active'));document.getElementById('d-sec-view').classList.add('active');document.querySelectorAll('#app-doctor .tab')[1].classList.add('active');}
 function askDelPat(id){const p=G.doctor.patients.find(x=>x.id===id);if(!p)return;pendingDeleteCb=()=>{G.doctor.patients=G.doctor.patients.filter(x=>x.id!==id);if(activeDoctorPatId===id)activeDoctorPatId=null;save();renderDPatList();renderDView();renderDCompareSlots();showToast('Eliminado');};document.getElementById('del-msg').textContent=`¿Eliminar a ${p.name} y todos sus datos?`;document.getElementById('delete-overlay').classList.add('open');}
 function getActivePat(){return G.doctor.patients.find(p=>p.id===activeDoctorPatId)||null;}
 
@@ -1574,7 +1599,7 @@ if(document.readyState==='loading'){
 // ════════════════════════════════════════
 // ACERCA DE NOSOTROS — datos de Facu
 // ════════════════════════════════════════
-const FACU_DATA = {"version":"2.0","type":"epilepsia","paciente":"Facundo","dob":"2018-07-15","exportado":"2026-05-08","events":[{"id":0.5,"date":"2025-12-15","hour":10,"minute":0},{"id":1.5,"date":"2025-12-15","hour":14,"minute":0},{"id":2.5,"date":"2025-12-16","hour":15,"minute":0},{"id":3.5,"date":"2025-12-16","hour":19,"minute":0},{"id":4.5,"date":"2025-12-18","hour":14,"minute":0},{"id":5.5,"date":"2025-12-19","hour":15,"minute":0},{"id":6.5,"date":"2025-12-20","hour":20,"minute":0},{"id":7.5,"date":"2025-12-21","hour":15,"minute":0},{"id":8.5,"date":"2025-12-22","hour":9,"minute":0},{"id":9.5,"date":"2025-12-22","hour":12,"minute":0},{"id":10.5,"date":"2025-12-23","hour":13,"minute":0},{"id":11.5,"date":"2025-12-23","hour":15,"minute":0},{"id":12.5,"date":"2025-12-23","hour":18,"minute":0},{"id":13.5,"date":"2025-12-24","hour":10,"minute":0},{"id":14.5,"date":"2025-12-24","hour":12,"minute":0},{"id":15.5,"date":"2025-12-24","hour":15,"minute":0},{"id":16.5,"date":"2025-12-27","hour":10,"minute":0},{"id":17.5,"date":"2025-12-27","hour":13,"minute":0},{"id":18.5,"date":"2025-12-27","hour":15,"minute":0},{"id":19.5,"date":"2025-12-27","hour":17,"minute":0},{"id":20.5,"date":"2025-12-27","hour":18,"minute":0},{"id":21.5,"date":"2025-12-27","hour":18,"minute":0},{"id":22.5,"date":"2025-12-27","hour":22,"minute":0},{"id":23.5,"date":"2025-12-28","hour":9,"minute":0},{"id":24.5,"date":"2025-12-28","hour":10,"minute":0},{"id":25.5,"date":"2025-12-28","hour":12,"minute":0},{"id":26.5,"date":"2025-12-28","hour":13,"minute":0},{"id":27.5,"date":"2025-12-28","hour":17,"minute":0},{"id":28.5,"date":"2025-12-29","hour":14,"minute":0},{"id":29.5,"date":"2025-12-29","hour":15,"minute":0},{"id":30.5,"date":"2025-12-29","hour":17,"minute":0},{"id":31.5,"date":"2025-12-29","hour":19,"minute":0},{"id":32.5,"date":"2025-12-29","hour":22,"minute":0},{"id":33.5,"date":"2025-12-31","hour":10,"minute":0},{"id":34.5,"date":"2026-01-01","hour":14,"minute":0},{"id":35.5,"date":"2026-01-01","hour":16,"minute":0},{"id":36.5,"date":"2026-01-01","hour":17,"minute":0},{"id":37.5,"date":"2026-01-01","hour":19,"minute":0},{"id":38.5,"date":"2026-01-01","hour":20,"minute":0},{"id":39.5,"date":"2026-01-01","hour":22,"minute":0},{"id":40.5,"date":"2026-01-02","hour":14,"minute":0},{"id":41.5,"date":"2026-01-02","hour":15,"minute":0},{"id":42.5,"date":"2026-01-02","hour":17,"minute":0},{"id":43.5,"date":"2026-01-02","hour":19,"minute":0},{"id":44.5,"date":"2026-01-02","hour":20,"minute":0},{"id":45.5,"date":"2026-01-02","hour":21,"minute":0},{"id":46.5,"date":"2026-01-02","hour":23,"minute":0},{"id":47.5,"date":"2026-01-03","hour":11,"minute":0},{"id":48.5,"date":"2026-01-03","hour":11,"minute":0},{"id":49.5,"date":"2026-01-03","hour":13,"minute":0},{"id":50.5,"date":"2026-01-03","hour":15,"minute":0},{"id":51.5,"date":"2026-01-03","hour":17,"minute":0},{"id":52.5,"date":"2026-01-03","hour":18,"minute":0},{"id":53.5,"date":"2026-01-03","hour":20,"minute":0},{"id":54.5,"date":"2026-01-04","hour":9,"minute":0},{"id":55.5,"date":"2026-01-04","hour":10,"minute":0},{"id":56.5,"date":"2026-01-04","hour":12,"minute":0},{"id":57.5,"date":"2026-01-04","hour":12,"minute":0},{"id":58.5,"date":"2026-01-04","hour":14,"minute":0},{"id":59.5,"date":"2026-01-04","hour":14,"minute":0},{"id":60.5,"date":"2026-01-04","hour":15,"minute":0},{"id":61.5,"date":"2026-01-04","hour":16,"minute":0},{"id":62.5,"date":"2026-01-04","hour":16,"minute":0},{"id":63.5,"date":"2026-01-04","hour":17,"minute":0},{"id":64.5,"date":"2026-01-04","hour":18,"minute":0},{"id":65.5,"date":"2026-01-04","hour":18,"minute":0},{"id":66.5,"date":"2026-01-04","hour":19,"minute":0},{"id":67.5,"date":"2026-01-04","hour":20,"minute":0},{"id":68.5,"date":"2026-01-04","hour":22,"minute":0},{"id":69.5,"date":"2026-01-04","hour":23,"minute":0},{"id":70.5,"date":"2026-01-05","hour":10,"minute":0},{"id":71.5,"date":"2026-01-05","hour":11,"minute":0},{"id":72.5,"date":"2026-01-05","hour":13,"minute":0},{"id":73.5,"date":"2026-01-05","hour":15,"minute":0},{"id":74.5,"date":"2026-01-05","hour":16,"minute":0},{"id":75.5,"date":"2026-01-05","hour":17,"minute":0},{"id":76.5,"date":"2026-01-05","hour":19,"minute":0},{"id":77.5,"date":"2026-01-05","hour":19,"minute":0},{"id":78.5,"date":"2026-01-05","hour":20,"minute":0},{"id":79.5,"date":"2026-01-06","hour":10,"minute":0},{"id":80.5,"date":"2026-01-06","hour":11,"minute":0},{"id":81.5,"date":"2026-01-06","hour":11,"minute":0},{"id":82.5,"date":"2026-01-06","hour":12,"minute":0},{"id":83.5,"date":"2026-01-06","hour":13,"minute":0},{"id":84.5,"date":"2026-01-06","hour":14,"minute":0},{"id":85.5,"date":"2026-01-06","hour":15,"minute":0},{"id":86.5,"date":"2026-01-06","hour":19,"minute":0},{"id":87.5,"date":"2026-01-06","hour":20,"minute":0},{"id":88.5,"date":"2026-01-06","hour":22,"minute":0},{"id":89.5,"date":"2026-01-07","hour":9,"minute":0},{"id":90.5,"date":"2026-01-07","hour":10,"minute":0},{"id":91.5,"date":"2026-01-07","hour":11,"minute":0},{"id":92.5,"date":"2026-01-07","hour":11,"minute":0},{"id":93.5,"date":"2026-01-07","hour":15,"minute":0},{"id":94.5,"date":"2026-01-07","hour":16,"minute":0},{"id":95.5,"date":"2026-01-07","hour":17,"minute":0},{"id":96.5,"date":"2026-01-07","hour":18,"minute":0},{"id":97.5,"date":"2026-01-07","hour":18,"minute":0},{"id":98.5,"date":"2026-01-07","hour":21,"minute":0},{"id":99.5,"date":"2026-01-08","hour":9,"minute":0},{"id":100.5,"date":"2026-01-08","hour":10,"minute":0},{"id":101.5,"date":"2026-01-08","hour":10,"minute":0},{"id":102.5,"date":"2026-01-08","hour":12,"minute":0},{"id":103.5,"date":"2026-01-08","hour":14,"minute":0},{"id":104.5,"date":"2026-01-08","hour":15,"minute":0},{"id":105.5,"date":"2026-01-08","hour":17,"minute":0},{"id":106.5,"date":"2026-01-08","hour":18,"minute":0},{"id":107.5,"date":"2026-01-08","hour":21,"minute":0},{"id":108.5,"date":"2026-01-08","hour":22,"minute":0},{"id":109.5,"date":"2026-01-09","hour":9,"minute":0},{"id":110.5,"date":"2026-01-09","hour":11,"minute":0},{"id":111.5,"date":"2026-01-09","hour":11,"minute":0},{"id":112.5,"date":"2026-01-09","hour":13,"minute":0},{"id":113.5,"date":"2026-01-09","hour":15,"minute":0},{"id":114.5,"date":"2026-01-09","hour":17,"minute":0},{"id":115.5,"date":"2026-01-09","hour":18,"minute":0},{"id":116.5,"date":"2026-01-09","hour":19,"minute":0},{"id":117.5,"date":"2026-01-09","hour":20,"minute":0},{"id":118.5,"date":"2026-01-09","hour":22,"minute":0},{"id":119.5,"date":"2026-01-10","hour":8,"minute":0},{"id":120.5,"date":"2026-01-10","hour":9,"minute":0},{"id":121.5,"date":"2026-01-10","hour":14,"minute":0},{"id":122.5,"date":"2026-01-10","hour":15,"minute":0},{"id":123.5,"date":"2026-01-10","hour":20,"minute":0},{"id":124.5,"date":"2026-01-11","hour":9,"minute":0},{"id":125.5,"date":"2026-01-11","hour":11,"minute":0},{"id":126.5,"date":"2026-01-11","hour":12,"minute":0},{"id":127.5,"date":"2026-01-11","hour":13,"minute":0},{"id":128.5,"date":"2026-01-11","hour":15,"minute":0},{"id":129.5,"date":"2026-01-11","hour":16,"minute":0},{"id":130.5,"date":"2026-01-11","hour":16,"minute":0},{"id":131.5,"date":"2026-01-11","hour":18,"minute":0},{"id":132.5,"date":"2026-01-11","hour":18,"minute":0},{"id":133.5,"date":"2026-01-11","hour":19,"minute":0},{"id":134.5,"date":"2026-01-11","hour":20,"minute":0},{"id":135.5,"date":"2026-01-11","hour":21,"minute":0},{"id":136.5,"date":"2026-01-12","hour":9,"minute":0},{"id":137.5,"date":"2026-01-12","hour":10,"minute":0},{"id":138.5,"date":"2026-01-12","hour":13,"minute":0},{"id":139.5,"date":"2026-01-12","hour":14,"minute":0},{"id":140.5,"date":"2026-01-12","hour":16,"minute":0},{"id":141.5,"date":"2026-01-12","hour":19,"minute":0},{"id":142.5,"date":"2026-01-12","hour":19,"minute":0},{"id":143.5,"date":"2026-01-13","hour":10,"minute":0},{"id":144.5,"date":"2026-01-13","hour":11,"minute":0},{"id":145.5,"date":"2026-01-13","hour":16,"minute":0},{"id":146.5,"date":"2026-01-13","hour":17,"minute":0},{"id":147.5,"date":"2026-01-13","hour":18,"minute":0},{"id":148.5,"date":"2026-01-13","hour":20,"minute":0},{"id":149.5,"date":"2026-01-13","hour":21,"minute":0},{"id":150.5,"date":"2026-01-13","hour":21,"minute":0},{"id":151.5,"date":"2026-01-14","hour":10,"minute":0},{"id":152.5,"date":"2026-01-14","hour":13,"minute":0},{"id":153.5,"date":"2026-01-14","hour":14,"minute":0},{"id":154.5,"date":"2026-01-14","hour":15,"minute":0},{"id":155.5,"date":"2026-01-14","hour":16,"minute":0},{"id":156.5,"date":"2026-01-15","hour":10,"minute":0},{"id":157.5,"date":"2026-01-15","hour":16,"minute":0},{"id":158.5,"date":"2026-01-15","hour":18,"minute":0},{"id":159.5,"date":"2026-01-15","hour":20,"minute":0},{"id":160.5,"date":"2026-01-16","hour":10,"minute":0},{"id":161.5,"date":"2026-01-16","hour":14,"minute":0},{"id":162.5,"date":"2026-01-16","hour":16,"minute":0},{"id":163.5,"date":"2026-01-16","hour":18,"minute":0},{"id":164.5,"date":"2026-01-16","hour":20,"minute":0},{"id":165.5,"date":"2026-01-17","hour":10,"minute":0},{"id":166.5,"date":"2026-01-17","hour":15,"minute":0},{"id":167.5,"date":"2026-01-17","hour":16,"minute":0},{"id":168.5,"date":"2026-01-17","hour":19,"minute":0},{"id":169.5,"date":"2026-01-18","hour":15,"minute":0},{"id":170.5,"date":"2026-01-18","hour":19,"minute":0},{"id":171.5,"date":"2026-01-19","hour":12,"minute":0},{"id":172.5,"date":"2026-01-19","hour":13,"minute":0},{"id":173.5,"date":"2026-01-19","hour":14,"minute":0},{"id":174.5,"date":"2026-01-19","hour":15,"minute":0},{"id":175.5,"date":"2026-01-19","hour":18,"minute":0},{"id":176.5,"date":"2026-01-19","hour":21,"minute":0},{"id":177.5,"date":"2026-01-19","hour":22,"minute":0},{"id":178.5,"date":"2026-01-20","hour":10,"minute":0},{"id":179.5,"date":"2026-01-20","hour":14,"minute":0},{"id":180.5,"date":"2026-01-20","hour":16,"minute":0},{"id":181.5,"date":"2026-01-20","hour":18,"minute":0},{"id":182.5,"date":"2026-01-21","hour":12,"minute":0},{"id":183.5,"date":"2026-01-21","hour":16,"minute":0},{"id":184.5,"date":"2026-01-21","hour":17,"minute":0},{"id":185.5,"date":"2026-01-21","hour":21,"minute":0},{"id":186.5,"date":"2026-01-21","hour":23,"minute":0},{"id":187.5,"date":"2026-01-22","hour":10,"minute":0},{"id":188.5,"date":"2026-01-22","hour":12,"minute":0},{"id":189.5,"date":"2026-01-22","hour":12,"minute":0},{"id":190.5,"date":"2026-01-22","hour":15,"minute":0},{"id":191.5,"date":"2026-01-22","hour":18,"minute":0},{"id":192.5,"date":"2026-01-22","hour":20,"minute":0},{"id":193.5,"date":"2026-01-22","hour":21,"minute":0},{"id":194.5,"date":"2026-01-23","hour":10,"minute":0},{"id":195.5,"date":"2026-01-23","hour":14,"minute":0},{"id":196.5,"date":"2026-01-23","hour":16,"minute":0},{"id":197.5,"date":"2026-01-23","hour":18,"minute":0},{"id":198.5,"date":"2026-01-24","hour":12,"minute":0},{"id":199.5,"date":"2026-01-24","hour":16,"minute":0},{"id":200.5,"date":"2026-01-24","hour":17,"minute":0},{"id":201.5,"date":"2026-01-24","hour":19,"minute":0},{"id":202.5,"date":"2026-01-24","hour":22,"minute":0},{"id":203.5,"date":"2026-01-25","hour":10,"minute":0},{"id":204.5,"date":"2026-01-25","hour":12,"minute":0},{"id":205.5,"date":"2026-01-25","hour":13,"minute":0},{"id":206.5,"date":"2026-01-25","hour":19,"minute":0},{"id":207.5,"date":"2026-01-25","hour":20,"minute":0},{"id":208.5,"date":"2026-01-26","hour":15,"minute":0},{"id":209.5,"date":"2026-01-26","hour":20,"minute":0},{"id":210.5,"date":"2026-01-27","hour":9,"minute":0},{"id":211.5,"date":"2026-01-27","hour":13,"minute":0},{"id":212.5,"date":"2026-01-27","hour":15,"minute":0},{"id":213.5,"date":"2026-01-27","hour":16,"minute":0},{"id":214.5,"date":"2026-01-27","hour":18,"minute":0},{"id":215.5,"date":"2026-01-27","hour":21,"minute":0},{"id":216.5,"date":"2026-01-27","hour":21,"minute":0},{"id":217.5,"date":"2026-01-28","hour":8,"minute":0},{"id":218.5,"date":"2026-01-28","hour":15,"minute":0},{"id":219.5,"date":"2026-01-28","hour":16,"minute":0},{"id":220.5,"date":"2026-01-28","hour":18,"minute":0},{"id":221.5,"date":"2026-01-28","hour":18,"minute":0},{"id":222.5,"date":"2026-01-28","hour":21,"minute":0},{"id":223.5,"date":"2026-01-29","hour":11,"minute":0},{"id":224.5,"date":"2026-01-29","hour":14,"minute":0},{"id":225.5,"date":"2026-01-29","hour":15,"minute":0},{"id":226.5,"date":"2026-01-30","hour":10,"minute":0},{"id":227.5,"date":"2026-01-30","hour":17,"minute":0},{"id":228.5,"date":"2026-01-30","hour":19,"minute":0},{"id":229.5,"date":"2026-01-30","hour":20,"minute":0},{"id":230.5,"date":"2026-01-30","hour":21,"minute":0},{"id":231.5,"date":"2026-01-31","hour":9,"minute":0},{"id":232.5,"date":"2026-01-31","hour":12,"minute":0},{"id":233.5,"date":"2026-01-31","hour":16,"minute":0},{"id":234.5,"date":"2026-01-31","hour":17,"minute":0},{"id":235.5,"date":"2026-01-31","hour":19,"minute":0},{"id":236.5,"date":"2026-01-31","hour":20,"minute":0},{"id":237.5,"date":"2026-01-31","hour":21,"minute":0},{"id":238.5,"date":"2026-01-31","hour":22,"minute":0},{"id":239.5,"date":"2026-02-01","hour":8,"minute":0},{"id":240.5,"date":"2026-02-01","hour":9,"minute":0},{"id":241.5,"date":"2026-02-01","hour":11,"minute":0},{"id":242.5,"date":"2026-02-01","hour":12,"minute":0},{"id":243.5,"date":"2026-02-01","hour":13,"minute":0},{"id":244.5,"date":"2026-02-01","hour":14,"minute":0},{"id":245.5,"date":"2026-02-01","hour":17,"minute":0},{"id":246.5,"date":"2026-02-01","hour":18,"minute":0},{"id":247.5,"date":"2026-02-01","hour":23,"minute":0},{"id":248.5,"date":"2026-02-02","hour":8,"minute":0},{"id":249.5,"date":"2026-02-02","hour":12,"minute":0},{"id":250.5,"date":"2026-02-02","hour":15,"minute":0},{"id":251.5,"date":"2026-02-02","hour":21,"minute":0},{"id":252.5,"date":"2026-02-03","hour":8,"minute":0},{"id":253.5,"date":"2026-02-03","hour":13,"minute":0},{"id":254.5,"date":"2026-02-03","hour":14,"minute":0},{"id":255.5,"date":"2026-02-03","hour":15,"minute":0},{"id":256.5,"date":"2026-02-03","hour":16,"minute":0},{"id":257.5,"date":"2026-02-03","hour":16,"minute":0},{"id":258.5,"date":"2026-02-03","hour":19,"minute":0},{"id":259.5,"date":"2026-02-03","hour":19,"minute":0},{"id":260.5,"date":"2026-02-03","hour":21,"minute":0},{"id":261.5,"date":"2026-02-04","hour":8,"minute":0},{"id":262.5,"date":"2026-02-04","hour":10,"minute":0},{"id":263.5,"date":"2026-02-04","hour":11,"minute":0},{"id":264.5,"date":"2026-02-04","hour":11,"minute":0},{"id":265.5,"date":"2026-02-04","hour":12,"minute":0},{"id":266.5,"date":"2026-02-04","hour":13,"minute":0},{"id":267.5,"date":"2026-02-04","hour":14,"minute":0},{"id":268.5,"date":"2026-02-04","hour":15,"minute":0},{"id":269.5,"date":"2026-02-04","hour":21,"minute":0},{"id":270.5,"date":"2026-02-04","hour":23,"minute":0},{"id":271.5,"date":"2026-02-05","hour":8,"minute":0},{"id":272.5,"date":"2026-02-05","hour":8,"minute":0},{"id":273.5,"date":"2026-02-05","hour":11,"minute":0},{"id":274.5,"date":"2026-02-05","hour":13,"minute":0},{"id":275.5,"date":"2026-02-05","hour":15,"minute":0},{"id":276.5,"date":"2026-02-05","hour":18,"minute":0},{"id":277.5,"date":"2026-02-05","hour":20,"minute":0},{"id":278.5,"date":"2026-02-05","hour":21,"minute":0},{"id":279.5,"date":"2026-02-06","hour":18,"minute":0},{"id":280.5,"date":"2026-02-06","hour":20,"minute":0},{"id":281.5,"date":"2026-02-06","hour":21,"minute":0},{"id":282.5,"date":"2026-02-07","hour":12,"minute":0},{"id":283.5,"date":"2026-02-07","hour":14,"minute":0},{"id":284.5,"date":"2026-02-07","hour":15,"minute":0},{"id":285.5,"date":"2026-02-07","hour":17,"minute":0},{"id":286.5,"date":"2026-02-07","hour":18,"minute":0},{"id":287.5,"date":"2026-02-08","hour":11,"minute":0},{"id":288.5,"date":"2026-02-08","hour":17,"minute":0},{"id":289.5,"date":"2026-02-09","hour":16,"minute":0},{"id":290.5,"date":"2026-02-09","hour":21,"minute":0},{"id":291.5,"date":"2026-02-10","hour":19,"minute":0},{"id":292.5,"date":"2026-02-10","hour":21,"minute":0},{"id":293.5,"date":"2026-02-11","hour":15,"minute":0},{"id":294.5,"date":"2026-02-11","hour":17,"minute":0},{"id":295.5,"date":"2026-02-11","hour":19,"minute":0},{"id":296.5,"date":"2026-02-11","hour":21,"minute":0},{"id":297.5,"date":"2026-02-12","hour":8,"minute":0},{"id":298.5,"date":"2026-02-12","hour":15,"minute":0},{"id":299.5,"date":"2026-02-12","hour":19,"minute":0},{"id":300.5,"date":"2026-02-13","hour":20,"minute":0},{"id":301.5,"date":"2026-02-14","hour":8,"minute":0},{"id":302.5,"date":"2026-02-14","hour":21,"minute":0},{"id":303.5,"date":"2026-02-15","hour":9,"minute":0},{"id":304.5,"date":"2026-02-15","hour":15,"minute":0},{"id":305.5,"date":"2026-02-15","hour":19,"minute":0},{"id":306.5,"date":"2026-02-15","hour":21,"minute":0},{"id":307.5,"date":"2026-02-16","hour":7,"minute":0},{"id":308.5,"date":"2026-02-16","hour":8,"minute":0},{"id":309.5,"date":"2026-02-16","hour":9,"minute":0},{"id":310.5,"date":"2026-02-16","hour":21,"minute":0},{"id":311.5,"date":"2026-02-17","hour":19,"minute":0},{"id":312.5,"date":"2026-02-18","hour":21,"minute":0},{"id":313.5,"date":"2026-02-19","hour":8,"minute":0},{"id":314.5,"date":"2026-02-19","hour":9,"minute":0},{"id":315.5,"date":"2026-02-19","hour":16,"minute":0},{"id":316.5,"date":"2026-02-19","hour":17,"minute":0},{"id":317.5,"date":"2026-02-20","hour":15,"minute":0},{"id":318.5,"date":"2026-02-20","hour":18,"minute":0},{"id":319.5,"date":"2026-02-20","hour":20,"minute":0},{"id":320.5,"date":"2026-02-21","hour":7,"minute":0},{"id":321.5,"date":"2026-02-21","hour":10,"minute":0},{"id":322.5,"date":"2026-02-21","hour":16,"minute":0},{"id":323.5,"date":"2026-02-21","hour":19,"minute":0},{"id":324.5,"date":"2026-02-22","hour":19,"minute":0},{"id":325.5,"date":"2026-02-23","hour":20,"minute":0},{"id":326.5,"date":"2026-02-24","hour":19,"minute":0},{"id":327.5,"date":"2026-02-24","hour":20,"minute":0},{"id":328.5,"date":"2026-02-25","hour":8,"minute":0},{"id":329.5,"date":"2026-02-26","hour":7,"minute":0}],"meds":[{"id":1001,"name":"Kepra","start":"2025-12-22","end":"2026-02-03","doses":[{"date":"2025-12-22","val":"4"},{"date":"2025-12-27","val":"6"},{"date":"2026-01-01","val":"8"},{"date":"2026-01-07","val":"12"},{"date":"2026-01-09","val":"10"},{"date":"2026-01-25","val":"8"},{"date":"2026-01-31","val":"6"},{"date":"2026-02-01","val":"3"}],"color":"#3B82F6"},{"id":1002,"name":"Depakene","start":"2026-01-09","end":"2026-05-04","doses":[{"date":"2026-01-09","val":"15"},{"date":"2026-02-03","val":"18"},{"date":"2026-04-01","val":"12"},{"date":"2026-04-07","val":"10"},{"date":"2026-04-14","val":"8"},{"date":"2026-04-21","val":"6"},{"date":"2026-04-28","val":"4"}],"color":"#EF4444"},{"id":1003,"name":"Trileptal","start":"2026-02-05","end":"2026-05-04","doses":[{"date":"2026-02-05","val":"3"},{"date":"2026-02-10","val":"6"},{"date":"2026-02-16","val":"9"},{"date":"2026-02-21","val":"12"},{"date":"2026-02-26","val":"14"},{"date":"2026-04-01","val":"15"}],"color":"#10B981"}],"weights":[{"date":"2025-12-15","kg":26.5}]};
+const FACU_DATA = {"version":"2.0","type":"epilepsia","paciente":"Facundo","dob":"2018-07-15","exportado":"2026-05-08","events":[{"id":0.5,"date":"2025-12-15","hour":10,"minute":0},{"id":1.5,"date":"2025-12-15","hour":14,"minute":0},{"id":2.5,"date":"2025-12-16","hour":15,"minute":0},{"id":3.5,"date":"2025-12-16","hour":19,"minute":0},{"id":4.5,"date":"2025-12-18","hour":14,"minute":0},{"id":5.5,"date":"2025-12-19","hour":15,"minute":0},{"id":6.5,"date":"2025-12-20","hour":20,"minute":0},{"id":7.5,"date":"2025-12-21","hour":15,"minute":0},{"id":8.5,"date":"2025-12-22","hour":9,"minute":0},{"id":9.5,"date":"2025-12-22","hour":12,"minute":0},{"id":10.5,"date":"2025-12-23","hour":13,"minute":0},{"id":11.5,"date":"2025-12-23","hour":15,"minute":0},{"id":12.5,"date":"2025-12-23","hour":18,"minute":0},{"id":13.5,"date":"2025-12-24","hour":10,"minute":0},{"id":14.5,"date":"2025-12-24","hour":12,"minute":0},{"id":15.5,"date":"2025-12-24","hour":15,"minute":0},{"id":16.5,"date":"2025-12-27","hour":10,"minute":0},{"id":17.5,"date":"2025-12-27","hour":13,"minute":0},{"id":18.5,"date":"2025-12-27","hour":15,"minute":0},{"id":19.5,"date":"2025-12-27","hour":17,"minute":0},{"id":20.5,"date":"2025-12-27","hour":18,"minute":0},{"id":21.5,"date":"2025-12-27","hour":18,"minute":0},{"id":22.5,"date":"2025-12-27","hour":22,"minute":0},{"id":23.5,"date":"2025-12-28","hour":9,"minute":0},{"id":24.5,"date":"2025-12-28","hour":10,"minute":0},{"id":25.5,"date":"2025-12-28","hour":12,"minute":0},{"id":26.5,"date":"2025-12-28","hour":13,"minute":0},{"id":27.5,"date":"2025-12-28","hour":17,"minute":0},{"id":28.5,"date":"2025-12-29","hour":14,"minute":0},{"id":29.5,"date":"2025-12-29","hour":15,"minute":0},{"id":30.5,"date":"2025-12-29","hour":17,"minute":0},{"id":31.5,"date":"2025-12-29","hour":19,"minute":0},{"id":32.5,"date":"2025-12-29","hour":22,"minute":0},{"id":33.5,"date":"2025-12-31","hour":10,"minute":0},{"id":34.5,"date":"2026-01-01","hour":14,"minute":0},{"id":35.5,"date":"2026-01-01","hour":16,"minute":0},{"id":36.5,"date":"2026-01-01","hour":17,"minute":0},{"id":37.5,"date":"2026-01-01","hour":19,"minute":0},{"id":38.5,"date":"2026-01-01","hour":20,"minute":0},{"id":39.5,"date":"2026-01-01","hour":22,"minute":0},{"id":40.5,"date":"2026-01-02","hour":14,"minute":0},{"id":41.5,"date":"2026-01-02","hour":15,"minute":0},{"id":42.5,"date":"2026-01-02","hour":17,"minute":0},{"id":43.5,"date":"2026-01-02","hour":19,"minute":0},{"id":44.5,"date":"2026-01-02","hour":20,"minute":0},{"id":45.5,"date":"2026-01-02","hour":21,"minute":0},{"id":46.5,"date":"2026-01-02","hour":23,"minute":0},{"id":47.5,"date":"2026-01-03","hour":11,"minute":0},{"id":48.5,"date":"2026-01-03","hour":11,"minute":0},{"id":49.5,"date":"2026-01-03","hour":13,"minute":0},{"id":50.5,"date":"2026-01-03","hour":15,"minute":0},{"id":51.5,"date":"2026-01-03","hour":17,"minute":0},{"id":52.5,"date":"2026-01-03","hour":18,"minute":0},{"id":53.5,"date":"2026-01-03","hour":20,"minute":0},{"id":54.5,"date":"2026-01-04","hour":9,"minute":0},{"id":55.5,"date":"2026-01-04","hour":10,"minute":0},{"id":56.5,"date":"2026-01-04","hour":12,"minute":0},{"id":57.5,"date":"2026-01-04","hour":12,"minute":0},{"id":58.5,"date":"2026-01-04","hour":14,"minute":0},{"id":59.5,"date":"2026-01-04","hour":14,"minute":0},{"id":60.5,"date":"2026-01-04","hour":15,"minute":0},{"id":61.5,"date":"2026-01-04","hour":16,"minute":0},{"id":62.5,"date":"2026-01-04","hour":16,"minute":0},{"id":63.5,"date":"2026-01-04","hour":17,"minute":0},{"id":64.5,"date":"2026-01-04","hour":18,"minute":0},{"id":65.5,"date":"2026-01-04","hour":18,"minute":0},{"id":66.5,"date":"2026-01-04","hour":19,"minute":0},{"id":67.5,"date":"2026-01-04","hour":20,"minute":0},{"id":68.5,"date":"2026-01-04","hour":22,"minute":0},{"id":69.5,"date":"2026-01-04","hour":23,"minute":0},{"id":70.5,"date":"2026-01-05","hour":10,"minute":0},{"id":71.5,"date":"2026-01-05","hour":11,"minute":0},{"id":72.5,"date":"2026-01-05","hour":13,"minute":0},{"id":73.5,"date":"2026-01-05","hour":15,"minute":0},{"id":74.5,"date":"2026-01-05","hour":16,"minute":0},{"id":75.5,"date":"2026-01-05","hour":17,"minute":0},{"id":76.5,"date":"2026-01-05","hour":19,"minute":0},{"id":77.5,"date":"2026-01-05","hour":19,"minute":0},{"id":78.5,"date":"2026-01-05","hour":20,"minute":0},{"id":79.5,"date":"2026-01-06","hour":10,"minute":0},{"id":80.5,"date":"2026-01-06","hour":11,"minute":0},{"id":81.5,"date":"2026-01-06","hour":11,"minute":0},{"id":82.5,"date":"2026-01-06","hour":12,"minute":0},{"id":83.5,"date":"2026-01-06","hour":13,"minute":0},{"id":84.5,"date":"2026-01-06","hour":14,"minute":0},{"id":85.5,"date":"2026-01-06","hour":15,"minute":0},{"id":86.5,"date":"2026-01-06","hour":19,"minute":0},{"id":87.5,"date":"2026-01-06","hour":20,"minute":0},{"id":88.5,"date":"2026-01-06","hour":22,"minute":0},{"id":89.5,"date":"2026-01-07","hour":9,"minute":0},{"id":90.5,"date":"2026-01-07","hour":10,"minute":0},{"id":91.5,"date":"2026-01-07","hour":11,"minute":0},{"id":92.5,"date":"2026-01-07","hour":11,"minute":0},{"id":93.5,"date":"2026-01-07","hour":15,"minute":0},{"id":94.5,"date":"2026-01-07","hour":16,"minute":0},{"id":95.5,"date":"2026-01-07","hour":17,"minute":0},{"id":96.5,"date":"2026-01-07","hour":18,"minute":0},{"id":97.5,"date":"2026-01-07","hour":18,"minute":0},{"id":98.5,"date":"2026-01-07","hour":21,"minute":0},{"id":99.5,"date":"2026-01-08","hour":9,"minute":0},{"id":100.5,"date":"2026-01-08","hour":10,"minute":0},{"id":101.5,"date":"2026-01-08","hour":10,"minute":0},{"id":102.5,"date":"2026-01-08","hour":12,"minute":0},{"id":103.5,"date":"2026-01-08","hour":14,"minute":0},{"id":104.5,"date":"2026-01-08","hour":15,"minute":0},{"id":105.5,"date":"2026-01-08","hour":17,"minute":0},{"id":106.5,"date":"2026-01-08","hour":18,"minute":0},{"id":107.5,"date":"2026-01-08","hour":21,"minute":0},{"id":108.5,"date":"2026-01-08","hour":22,"minute":0},{"id":109.5,"date":"2026-01-09","hour":9,"minute":0},{"id":110.5,"date":"2026-01-09","hour":11,"minute":0},{"id":111.5,"date":"2026-01-09","hour":11,"minute":0},{"id":112.5,"date":"2026-01-09","hour":13,"minute":0},{"id":113.5,"date":"2026-01-09","hour":15,"minute":0},{"id":114.5,"date":"2026-01-09","hour":17,"minute":0},{"id":115.5,"date":"2026-01-09","hour":18,"minute":0},{"id":116.5,"date":"2026-01-09","hour":19,"minute":0},{"id":117.5,"date":"2026-01-09","hour":20,"minute":0},{"id":118.5,"date":"2026-01-09","hour":22,"minute":0},{"id":119.5,"date":"2026-01-10","hour":8,"minute":0},{"id":120.5,"date":"2026-01-10","hour":9,"minute":0},{"id":121.5,"date":"2026-01-10","hour":14,"minute":0},{"id":122.5,"date":"2026-01-10","hour":15,"minute":0},{"id":123.5,"date":"2026-01-10","hour":20,"minute":0},{"id":124.5,"date":"2026-01-11","hour":9,"minute":0},{"id":125.5,"date":"2026-01-11","hour":11,"minute":0},{"id":126.5,"date":"2026-01-11","hour":12,"minute":0},{"id":127.5,"date":"2026-01-11","hour":13,"minute":0},{"id":128.5,"date":"2026-01-11","hour":15,"minute":0},{"id":129.5,"date":"2026-01-11","hour":16,"minute":0},{"id":130.5,"date":"2026-01-11","hour":16,"minute":0},{"id":131.5,"date":"2026-01-11","hour":18,"minute":0},{"id":132.5,"date":"2026-01-11","hour":18,"minute":0},{"id":133.5,"date":"2026-01-11","hour":19,"minute":0},{"id":134.5,"date":"2026-01-11","hour":20,"minute":0},{"id":135.5,"date":"2026-01-11","hour":21,"minute":0},{"id":136.5,"date":"2026-01-12","hour":9,"minute":0},{"id":137.5,"date":"2026-01-12","hour":10,"minute":0},{"id":138.5,"date":"2026-01-12","hour":13,"minute":0},{"id":139.5,"date":"2026-01-12","hour":14,"minute":0},{"id":140.5,"date":"2026-01-12","hour":16,"minute":0},{"id":141.5,"date":"2026-01-12","hour":19,"minute":0},{"id":142.5,"date":"2026-01-12","hour":19,"minute":0},{"id":143.5,"date":"2026-01-13","hour":10,"minute":0},{"id":144.5,"date":"2026-01-13","hour":11,"minute":0},{"id":145.5,"date":"2026-01-13","hour":16,"minute":0},{"id":146.5,"date":"2026-01-13","hour":17,"minute":0},{"id":147.5,"date":"2026-01-13","hour":18,"minute":0},{"id":148.5,"date":"2026-01-13","hour":20,"minute":0},{"id":149.5,"date":"2026-01-13","hour":21,"minute":0},{"id":150.5,"date":"2026-01-13","hour":21,"minute":0},{"id":151.5,"date":"2026-01-14","hour":10,"minute":0},{"id":152.5,"date":"2026-01-14","hour":13,"minute":0},{"id":153.5,"date":"2026-01-14","hour":14,"minute":0},{"id":154.5,"date":"2026-01-14","hour":15,"minute":0},{"id":155.5,"date":"2026-01-14","hour":16,"minute":0},{"id":156.5,"date":"2026-01-15","hour":10,"minute":0},{"id":157.5,"date":"2026-01-15","hour":16,"minute":0},{"id":158.5,"date":"2026-01-15","hour":18,"minute":0},{"id":159.5,"date":"2026-01-15","hour":20,"minute":0},{"id":160.5,"date":"2026-01-16","hour":10,"minute":0},{"id":161.5,"date":"2026-01-16","hour":14,"minute":0},{"id":162.5,"date":"2026-01-16","hour":16,"minute":0},{"id":163.5,"date":"2026-01-16","hour":18,"minute":0},{"id":164.5,"date":"2026-01-16","hour":20,"minute":0},{"id":165.5,"date":"2026-01-17","hour":10,"minute":0},{"id":166.5,"date":"2026-01-17","hour":15,"minute":0},{"id":167.5,"date":"2026-01-17","hour":16,"minute":0},{"id":168.5,"date":"2026-01-17","hour":19,"minute":0},{"id":169.5,"date":"2026-01-18","hour":15,"minute":0},{"id":170.5,"date":"2026-01-18","hour":19,"minute":0},{"id":171.5,"date":"2026-01-19","hour":12,"minute":0},{"id":172.5,"date":"2026-01-19","hour":13,"minute":0},{"id":173.5,"date":"2026-01-19","hour":14,"minute":0},{"id":174.5,"date":"2026-01-19","hour":15,"minute":0},{"id":175.5,"date":"2026-01-19","hour":18,"minute":0},{"id":176.5,"date":"2026-01-19","hour":21,"minute":0},{"id":177.5,"date":"2026-01-19","hour":22,"minute":0},{"id":178.5,"date":"2026-01-20","hour":10,"minute":0},{"id":179.5,"date":"2026-01-20","hour":14,"minute":0},{"id":180.5,"date":"2026-01-20","hour":16,"minute":0},{"id":181.5,"date":"2026-01-20","hour":18,"minute":0},{"id":182.5,"date":"2026-01-21","hour":12,"minute":0},{"id":183.5,"date":"2026-01-21","hour":16,"minute":0},{"id":184.5,"date":"2026-01-21","hour":17,"minute":0},{"id":185.5,"date":"2026-01-21","hour":21,"minute":0},{"id":186.5,"date":"2026-01-21","hour":23,"minute":0},{"id":187.5,"date":"2026-01-22","hour":10,"minute":0},{"id":188.5,"date":"2026-01-22","hour":12,"minute":0},{"id":189.5,"date":"2026-01-22","hour":12,"minute":0},{"id":190.5,"date":"2026-01-22","hour":15,"minute":0},{"id":191.5,"date":"2026-01-22","hour":18,"minute":0},{"id":192.5,"date":"2026-01-22","hour":20,"minute":0},{"id":193.5,"date":"2026-01-22","hour":21,"minute":0},{"id":194.5,"date":"2026-01-23","hour":10,"minute":0},{"id":195.5,"date":"2026-01-23","hour":14,"minute":0},{"id":196.5,"date":"2026-01-23","hour":16,"minute":0},{"id":197.5,"date":"2026-01-23","hour":18,"minute":0},{"id":198.5,"date":"2026-01-24","hour":12,"minute":0},{"id":199.5,"date":"2026-01-24","hour":16,"minute":0},{"id":200.5,"date":"2026-01-24","hour":17,"minute":0},{"id":201.5,"date":"2026-01-24","hour":19,"minute":0},{"id":202.5,"date":"2026-01-24","hour":22,"minute":0},{"id":203.5,"date":"2026-01-25","hour":10,"minute":0},{"id":204.5,"date":"2026-01-25","hour":12,"minute":0},{"id":205.5,"date":"2026-01-25","hour":13,"minute":0},{"id":206.5,"date":"2026-01-25","hour":19,"minute":0},{"id":207.5,"date":"2026-01-25","hour":20,"minute":0},{"id":208.5,"date":"2026-01-26","hour":15,"minute":0},{"id":209.5,"date":"2026-01-26","hour":20,"minute":0},{"id":210.5,"date":"2026-01-27","hour":9,"minute":0},{"id":211.5,"date":"2026-01-27","hour":13,"minute":0},{"id":212.5,"date":"2026-01-27","hour":15,"minute":0},{"id":213.5,"date":"2026-01-27","hour":16,"minute":0},{"id":214.5,"date":"2026-01-27","hour":18,"minute":0},{"id":215.5,"date":"2026-01-27","hour":21,"minute":0},{"id":216.5,"date":"2026-01-27","hour":21,"minute":0},{"id":217.5,"date":"2026-01-28","hour":8,"minute":0},{"id":218.5,"date":"2026-01-28","hour":15,"minute":0},{"id":219.5,"date":"2026-01-28","hour":16,"minute":0},{"id":220.5,"date":"2026-01-28","hour":18,"minute":0},{"id":221.5,"date":"2026-01-28","hour":18,"minute":0},{"id":222.5,"date":"2026-01-28","hour":21,"minute":0},{"id":223.5,"date":"2026-01-29","hour":11,"minute":0},{"id":224.5,"date":"2026-01-29","hour":14,"minute":0},{"id":225.5,"date":"2026-01-29","hour":15,"minute":0},{"id":226.5,"date":"2026-01-30","hour":10,"minute":0},{"id":227.5,"date":"2026-01-30","hour":17,"minute":0},{"id":228.5,"date":"2026-01-30","hour":19,"minute":0},{"id":229.5,"date":"2026-01-30","hour":20,"minute":0},{"id":230.5,"date":"2026-01-30","hour":21,"minute":0},{"id":231.5,"date":"2026-01-31","hour":9,"minute":0},{"id":232.5,"date":"2026-01-31","hour":12,"minute":0},{"id":233.5,"date":"2026-01-31","hour":16,"minute":0},{"id":234.5,"date":"2026-01-31","hour":17,"minute":0},{"id":235.5,"date":"2026-01-31","hour":19,"minute":0},{"id":236.5,"date":"2026-01-31","hour":20,"minute":0},{"id":237.5,"date":"2026-01-31","hour":21,"minute":0},{"id":238.5,"date":"2026-01-31","hour":22,"minute":0},{"id":239.5,"date":"2026-02-01","hour":8,"minute":0},{"id":240.5,"date":"2026-02-01","hour":9,"minute":0},{"id":241.5,"date":"2026-02-01","hour":11,"minute":0},{"id":242.5,"date":"2026-02-01","hour":12,"minute":0},{"id":243.5,"date":"2026-02-01","hour":13,"minute":0},{"id":244.5,"date":"2026-02-01","hour":14,"minute":0},{"id":245.5,"date":"2026-02-01","hour":17,"minute":0},{"id":246.5,"date":"2026-02-01","hour":18,"minute":0},{"id":247.5,"date":"2026-02-01","hour":23,"minute":0},{"id":248.5,"date":"2026-02-02","hour":8,"minute":0},{"id":249.5,"date":"2026-02-02","hour":12,"minute":0},{"id":250.5,"date":"2026-02-02","hour":15,"minute":0},{"id":251.5,"date":"2026-02-02","hour":21,"minute":0},{"id":252.5,"date":"2026-02-03","hour":8,"minute":0},{"id":253.5,"date":"2026-02-03","hour":13,"minute":0},{"id":254.5,"date":"2026-02-03","hour":14,"minute":0},{"id":255.5,"date":"2026-02-03","hour":15,"minute":0},{"id":256.5,"date":"2026-02-03","hour":16,"minute":0},{"id":257.5,"date":"2026-02-03","hour":16,"minute":0},{"id":258.5,"date":"2026-02-03","hour":19,"minute":0},{"id":259.5,"date":"2026-02-03","hour":19,"minute":0},{"id":260.5,"date":"2026-02-03","hour":21,"minute":0},{"id":261.5,"date":"2026-02-04","hour":8,"minute":0},{"id":262.5,"date":"2026-02-04","hour":10,"minute":0},{"id":263.5,"date":"2026-02-04","hour":11,"minute":0},{"id":264.5,"date":"2026-02-04","hour":11,"minute":0},{"id":265.5,"date":"2026-02-04","hour":12,"minute":0},{"id":266.5,"date":"2026-02-04","hour":13,"minute":0},{"id":267.5,"date":"2026-02-04","hour":14,"minute":0},{"id":268.5,"date":"2026-02-04","hour":15,"minute":0},{"id":269.5,"date":"2026-02-04","hour":21,"minute":0},{"id":270.5,"date":"2026-02-04","hour":23,"minute":0},{"id":271.5,"date":"2026-02-05","hour":8,"minute":0},{"id":272.5,"date":"2026-02-05","hour":8,"minute":0},{"id":273.5,"date":"2026-02-05","hour":11,"minute":0},{"id":274.5,"date":"2026-02-05","hour":13,"minute":0},{"id":275.5,"date":"2026-02-05","hour":15,"minute":0},{"id":276.5,"date":"2026-02-05","hour":18,"minute":0},{"id":277.5,"date":"2026-02-05","hour":20,"minute":0},{"id":278.5,"date":"2026-02-05","hour":21,"minute":0},{"id":279.5,"date":"2026-02-06","hour":18,"minute":0},{"id":280.5,"date":"2026-02-06","hour":20,"minute":0},{"id":281.5,"date":"2026-02-06","hour":21,"minute":0},{"id":282.5,"date":"2026-02-07","hour":12,"minute":0},{"id":283.5,"date":"2026-02-07","hour":14,"minute":0},{"id":284.5,"date":"2026-02-07","hour":15,"minute":0},{"id":285.5,"date":"2026-02-07","hour":17,"minute":0},{"id":286.5,"date":"2026-02-07","hour":18,"minute":0},{"id":287.5,"date":"2026-02-08","hour":11,"minute":0},{"id":288.5,"date":"2026-02-08","hour":17,"minute":0},{"id":289.5,"date":"2026-02-09","hour":16,"minute":0},{"id":290.5,"date":"2026-02-09","hour":21,"minute":0},{"id":291.5,"date":"2026-02-10","hour":19,"minute":0},{"id":292.5,"date":"2026-02-10","hour":21,"minute":0},{"id":293.5,"date":"2026-02-11","hour":15,"minute":0},{"id":294.5,"date":"2026-02-11","hour":17,"minute":0},{"id":295.5,"date":"2026-02-11","hour":19,"minute":0},{"id":296.5,"date":"2026-02-11","hour":21,"minute":0},{"id":297.5,"date":"2026-02-12","hour":8,"minute":0},{"id":298.5,"date":"2026-02-12","hour":15,"minute":0},{"id":299.5,"date":"2026-02-12","hour":19,"minute":0},{"id":300.5,"date":"2026-02-13","hour":20,"minute":0},{"id":301.5,"date":"2026-02-14","hour":8,"minute":0},{"id":302.5,"date":"2026-02-14","hour":21,"minute":0},{"id":303.5,"date":"2026-02-15","hour":9,"minute":0},{"id":304.5,"date":"2026-02-15","hour":15,"minute":0},{"id":305.5,"date":"2026-02-15","hour":19,"minute":0},{"id":306.5,"date":"2026-02-15","hour":21,"minute":0},{"id":307.5,"date":"2026-02-16","hour":7,"minute":0},{"id":308.5,"date":"2026-02-16","hour":8,"minute":0},{"id":309.5,"date":"2026-02-16","hour":9,"minute":0},{"id":310.5,"date":"2026-02-16","hour":21,"minute":0},{"id":311.5,"date":"2026-02-17","hour":19,"minute":0},{"id":312.5,"date":"2026-02-18","hour":21,"minute":0},{"id":313.5,"date":"2026-02-19","hour":8,"minute":0},{"id":314.5,"date":"2026-02-19","hour":9,"minute":0},{"id":315.5,"date":"2026-02-19","hour":16,"minute":0},{"id":316.5,"date":"2026-02-19","hour":17,"minute":0},{"id":317.5,"date":"2026-02-20","hour":15,"minute":0},{"id":318.5,"date":"2026-02-20","hour":18,"minute":0},{"id":319.5,"date":"2026-02-20","hour":20,"minute":0},{"id":320.5,"date":"2026-02-21","hour":7,"minute":0},{"id":321.5,"date":"2026-02-21","hour":10,"minute":0},{"id":322.5,"date":"2026-02-21","hour":16,"minute":0},{"id":323.5,"date":"2026-02-21","hour":19,"minute":0},{"id":324.5,"date":"2026-02-22","hour":19,"minute":0}],"meds":[{"id":1001,"name":"Kepra","start":"2025-12-22","end":"2026-02-03","doses":[{"date":"2025-12-22","val":"4"},{"date":"2025-12-27","val":"6"},{"date":"2026-01-01","val":"8"},{"date":"2026-01-07","val":"12"},{"date":"2026-01-09","val":"10"},{"date":"2026-01-25","val":"8"},{"date":"2026-01-31","val":"6"},{"date":"2026-02-01","val":"3"}],"color":"#3B82F6"},{"id":1002,"name":"Depakene","start":"2026-01-09","end":"2026-05-04","doses":[{"date":"2026-01-09","val":"15"},{"date":"2026-02-03","val":"18"},{"date":"2026-04-01","val":"12"},{"date":"2026-04-07","val":"10"},{"date":"2026-04-14","val":"8"},{"date":"2026-04-21","val":"6"},{"date":"2026-04-28","val":"4"}],"color":"#EF4444"},{"id":1003,"name":"Trileptal","start":"2026-02-05","end":"2026-05-04","doses":[{"date":"2026-02-05","val":"3"},{"date":"2026-02-10","val":"6"},{"date":"2026-02-16","val":"9"},{"date":"2026-02-21","val":"12"},{"date":"2026-02-26","val":"14"},{"date":"2026-04-01","val":"15"}],"color":"#10B981"}]};
 
 function loadFacuIntoApp() {
   if (!confirm('Esto reemplazara los datos actuales con el historial de Facundo. Continuas?')) return;
@@ -1612,10 +1637,8 @@ function loadFacuIntoDoctor() {
     G.doctor.patients.push(np);
     activeDoctorPatId=np.id;
   }
-  save(); renderDPatList();
-  const _btn=document.querySelector('#app-doctor .tab-bar .tab:nth-child(3)');
-  if(_btn) dTab('view',_btn); else renderDView();
-  showToast('Datos de Facundo cargados ✓');
+  save(); renderDPatList(); renderDView();
+  showToast('Datos de Facundo cargados');
 }
 
 function clearFacuDoctor() {
@@ -2082,22 +2105,6 @@ function buildDailyMedsMap(meds, allDates) {
   return map;
 }
 
-function buildAllDatesFromMeds(events, meds) {
-  // Combine event dates + all dates covered by any medication period
-  const dateSet = new Set(events.map(e=>e.date));
-  (meds||[]).forEach(med => {
-    if (!med.start) return;
-    const end = med.end || new Date().toISOString().slice(0,10);
-    let d = new Date(med.start + 'T12:00:00');
-    const endD = new Date(end + 'T12:00:00');
-    while (d <= endD) {
-      dateSet.add(d.toISOString().slice(0,10));
-      d.setDate(d.getDate()+1);
-    }
-  });
-  return [...dateSet].sort();
-}
-
 function getDayRange(dm, pesoKg) {
   // dm = {kepra, depakene, trileptal} in ml
   const cl = (drug, ml) => {
@@ -2134,8 +2141,8 @@ function renderDGraficos() {
     ? [...pat.weights].sort((a,b)=>a.date.localeCompare(b.date)).slice(-1)[0].kg
     : 26.5;
 
-  // Build date → range map (incluye días sin crisis pero con medicación)
-  const allDates = buildAllDatesFromMeds(pat.events, pat.meds||[]);
+  // Build date → range map
+  const allDates = [...new Set(pat.events.map(e=>e.date))].sort();
   const medMap   = buildDailyMedsMap(pat.meds||[], allDates);
   const dateToRn = {};
   allDates.forEach(d => { dateToRn[d] = getDayRange(medMap[d]||{}, pesoKg); });
@@ -2229,10 +2236,7 @@ function renderDGraficos() {
     // ── CHART 1: Histograma coloreado por rango ──
     const histLabels = allDates.map(d => { const p=d.split('-'); return`${+p[2]}/${+p[1]}`; });
     const histData   = allDates.map(d => byDate[d]||0);
-    const histColors = allDates.map(d => {
-      const rn = dateToRn[d];
-      return RANGO_DEF[rn]?.color || (byDate[d]>0 ? '#9E9E9E' : '#E0E0E0');
-    });
+    const histColors = allDates.map(d => RANGO_DEF[dateToRn[d]]?.color||'#ccc');
 
     _dGrafCharts['hist'] = new Chart(document.getElementById('d-graf-hist'), {
       type: 'bar',
@@ -2351,7 +2355,7 @@ function computeIEI(events, meds, weightHistory) {
     ? [...weightHistory].sort((a,b)=>a.date.localeCompare(b.date)).slice(-1)[0].kg
     : 26.5;
 
-  const allDates = buildAllDatesFromMeds(events, meds);
+  const allDates = [...new Set(events.map(e=>e.date))].sort();
   const medMap   = buildDailyMedsMap(meds, allDates);
   const dateToRn = {};
   allDates.forEach(d => { dateToRn[d] = getDayRange(medMap[d]||{}, pesoKg); });
@@ -2486,161 +2490,6 @@ function renderIEISummary(events, meds, weightHistory, containerId) {
 }
 
 
-
-
-// ════════════════════════════════════════════════════════════
-// TENDENCIA — resumen automático en Ver Datos
-// ════════════════════════════════════════════════════════════
-function computeTrend(events) {
-  if (!events || events.length < 14) return null;
-
-  // Agrupar por fecha
-  const byDate = {};
-  events.forEach(e => { byDate[e.date] = (byDate[e.date]||0)+1; });
-  const dates = Object.keys(byDate).sort();
-  const n = dates.length;
-  if (n < 14) return null;
-
-  // Dividir en mitad anterior y mitad reciente
-  const half = Math.floor(n/2);
-  const oldDates = dates.slice(0, half);
-  const newDates = dates.slice(n - half);
-
-  const avgOld = oldDates.reduce((s,d)=>s+(byDate[d]||0),0) / oldDates.length;
-  const avgNew = newDates.reduce((s,d)=>s+(byDate[d]||0),0) / newDates.length;
-
-  // Últimos 14 días
-  const last14 = dates.slice(-14);
-  const avgLast14 = last14.reduce((s,d)=>s+(byDate[d]||0),0) / 14;
-  const zeroDaysLast14 = last14.filter(d=>!byDate[d]||byDate[d]===0).length;
-
-  // Determinar tendencia
-  const change = avgOld > 0 ? (avgNew - avgOld) / avgOld * 100 : 0;
-
-  let trend, icon, color, bg, desc;
-
-  if (zeroDaysLast14 >= 12) {
-    trend='Controlado'; icon='🟢'; color='#1B5E20'; bg='#C8E6C9';
-    desc=`${zeroDaysLast14} de los últimos 14 días sin crisis. La medicación está logrando control efectivo.`;
-  } else if (avgLast14 === 0) {
-    trend='Controlado'; icon='🟢'; color='#1B5E20'; bg='#C8E6C9';
-    desc=`Sin crisis en los últimos 14 días registrados.`;
-  } else if (change < -20) {
-    trend='Tendencia a la baja'; icon='📉'; color='#1565C0'; bg='#BBDEFB';
-    desc=`Las crisis bajaron un ${Math.abs(change).toFixed(0)}% en la segunda mitad del período (${avgOld.toFixed(1)} → ${avgNew.toFixed(1)}/día). El tratamiento muestra efecto positivo.`;
-  } else if (change > 20) {
-    trend='Tendencia al alza'; icon='📈'; color='#B71C1C'; bg='#FFCDD2';
-    desc=`Las crisis subieron un ${change.toFixed(0)}% en la segunda mitad del período (${avgOld.toFixed(1)} → ${avgNew.toFixed(1)}/día). Puede indicar ajuste de dosis en proceso o pérdida de eficacia.`;
-  } else if (change > 30 && avgLast14 > avgOld * 1.5) {
-    trend='Descontrol'; icon='🔴'; color='#B71C1C'; bg='#FFCDD2';
-    desc=`Alta variabilidad y aumento sostenido de crisis. Requiere revisión médica.`;
-  } else {
-    trend='Estancamiento'; icon='➡️'; color='#E65100'; bg='#FFE0B2';
-    desc=`Las crisis se mantienen estables (${avgOld.toFixed(1)} → ${avgNew.toFixed(1)}/día). Sin mejora ni deterioro significativo en el período analizado.`;
-  }
-
-  return { trend, icon, color, bg, desc, avgOld: +avgOld.toFixed(2),
-           avgNew: +avgNew.toFixed(2), avgLast14: +avgLast14.toFixed(2),
-           zeroDaysLast14, change: +change.toFixed(1) };
-}
-
-function renderDTrend(pat) {
-  const card = document.getElementById('d-trend-card');
-  const content = document.getElementById('d-trend-content');
-  if (!card || !content) return;
-  if (!pat?.events?.length) { card.style.display='none'; return; }
-
-  const tr = computeTrend(pat.events);
-  if (!tr) {
-    card.style.display = pat.events.length >= 7 ? 'block' : 'none';
-    if (pat.events.length >= 7)
-      content.innerHTML = `<div style="font-size:12px;color:var(--t2)">Se necesitan al menos 14 días con datos para calcular la tendencia (actualmente ${[...new Set(pat.events.map(e=>e.date))].length}d).</div>`;
-    return;
-  }
-
-  card.style.display = 'block';
-  content.innerHTML = `
-    <div style="display:flex;align-items:center;gap:10px;padding:10px 0">
-      <div style="font-size:32px">${tr.icon}</div>
-      <div>
-        <div style="font-size:16px;font-weight:700;color:${tr.color}">${tr.trend}</div>
-        <div style="font-size:11px;color:var(--t2);margin-top:1px">
-          Primera mitad: ${tr.avgOld}/día → Segunda mitad: ${tr.avgNew}/día
-        </div>
-      </div>
-    </div>
-    <div style="background:${tr.bg};border-radius:var(--rm);padding:9px 12px;font-size:12px;color:${tr.color};line-height:1.6;margin-bottom:8px">
-      ${tr.desc}
-    </div>
-    <div style="display:flex;gap:8px">
-      <div style="flex:1;background:var(--bg2);border-radius:var(--rm);padding:7px;text-align:center">
-        <div style="font-size:15px;font-weight:700;color:${tr.avgLast14===0?'#1B5E20':tr.avgLast14<3?'#F59E0B':'#C62828'}">${tr.avgLast14}</div>
-        <div style="font-size:10px;color:var(--t2)">crisis/día (últ. 14d)</div>
-      </div>
-      <div style="flex:1;background:var(--bg2);border-radius:var(--rm);padding:7px;text-align:center">
-        <div style="font-size:15px;font-weight:700;color:${tr.zeroDaysLast14>10?'#1B5E20':tr.zeroDaysLast14>5?'#F59E0B':'#C62828'}">${tr.zeroDaysLast14}</div>
-        <div style="font-size:10px;color:var(--t2)">días sin crisis (últ. 14d)</div>
-      </div>
-      <div style="flex:1;background:var(--bg2);border-radius:var(--rm);padding:7px;text-align:center">
-        <div style="font-size:15px;font-weight:700;color:${tr.change<0?'#1B5E20':tr.change>0?'#C62828':'var(--t2)'}">${tr.change>0?'+':''}${tr.change}%</div>
-        <div style="font-size:10px;color:var(--t2)">cambio promedio</div>
-      </div>
-    </div>`;
-}
-
-// ════════════════════════════════════════════════════════════
-// PATCH renderDView: llamar renderDTrend al cargar datos
-// ════════════════════════════════════════════════════════════
-const _origRenderDView = typeof renderDView === 'function' ? renderDView : null;
-function renderDView() {
-  if (_origRenderDView) _origRenderDView();
-  setTimeout(() => { const p=getActivePat(); if(p) renderDTrend(p); }, 100);
-}
-
-// ════════════════════════════════════════════════════════════
-// PATCH renderDGraficos: agregar filtros de rango al gráfico 3
-// ════════════════════════════════════════════════════════════
-const _origRenderDGraficos = typeof renderDGraficos === 'function' ? renderDGraficos : null;
-function renderDGraficos() {
-  if (_origRenderDGraficos) _origRenderDGraficos();
-  // After charts render, add range filter checkboxes to legend
-  setTimeout(() => {
-    const lgEl = document.getElementById('d-graf-range-legend');
-    if (!lgEl || lgEl.dataset.upgraded) return;
-    lgEl.dataset.upgraded = '1';
-
-    // Rebuild legend with checkboxes
-    const checkboxes = lgEl.querySelectorAll ? [] : [];
-    const items = [...lgEl.children];
-    lgEl.innerHTML = '';
-
-    // Track which ranges have charts
-    const rangeChart = _dGrafCharts?.['probRanges'];
-    if (!rangeChart) return;
-
-    rangeChart.data.datasets.forEach((ds, idx) => {
-      const label = document.createElement('label');
-      label.style.cssText = 'display:flex;align-items:center;gap:5px;cursor:pointer;font-size:11px;color:var(--t2);user-select:none';
-      const cb = document.createElement('input');
-      cb.type = 'checkbox';
-      cb.checked = true;
-      cb.style.accentColor = ds.borderColor;
-      cb.dataset.idx = idx;
-      cb.addEventListener('change', () => {
-        rangeChart.setDatasetVisibility(idx, cb.checked);
-        rangeChart.update();
-      });
-      const dot = document.createElement('span');
-      dot.style.cssText = `width:16px;border-top:2.5px solid ${ds.borderColor};display:inline-block;flex-shrink:0`;
-      const txt = document.createElement('span');
-      txt.textContent = ds.label;
-      label.appendChild(cb);
-      label.appendChild(dot);
-      label.appendChild(txt);
-      lgEl.appendChild(label);
-    });
-  }, 600);
-}
 
 
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
