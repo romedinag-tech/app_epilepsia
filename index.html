@@ -560,10 +560,14 @@ const PAT_COLORS=['#4A90D9','#E05252','#27AE60','#E67E22','#7B6FD0','#D4537E'];
 const MED_COLORS=['#E05252','#27AE60','#E67E22','#7B6FD0','#2980B9','#D4537E'];
 const MED_DASH=[[],[5,3],[2,2],[4,2,1,2],[6,2],[3,3]];
 
-let G={role:null,patient:{events:[],meds:[],medVisible:{},importedFiles:[],profile:{name:'',dob:'',colorId:'sky'}},doctor:{profile:{name:'',spec:'',colorId:'slate'},patients:[]}};
+let G={role:null,patient:{events:[],meds:[],weights:[],medVisible:{},importedFiles:[],profile:{name:'',dob:'',colorId:'sky',photo:''}},doctor:{profile:{name:'',spec:'',colorId:'slate'},patients:[],activePatId:null}};
 let SC=PAL[0];
 let pRange='all',dRange='all',pCustomBtn=null,dCustomBtn=null;
-let activeDoctorPatId=null;
+let _activeDoctorPatId=null;
+Object.defineProperty(window,'activeDoctorPatId',{
+  get:()=>_activeDoctorPatId!==null?_activeDoctorPatId:(G?.doctor?.activePatId||null),
+  set:(v)=>{_activeDoctorPatId=v;if(G?.doctor)G.doctor.activePatId=v;}
+});
 let pendingDeleteCb=null;
 let charts={pMain:null,pProb:null,pComp:null,dMain:null,dProb:null,dCompHist:null,dCompProb:null};
 let pMedDoses=[],dCompRanges={};
@@ -572,7 +576,7 @@ function pad(n){return String(n).padStart(2,'0');}
 function todayStr(){const d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
 function fmtS(s){if(!s)return'';const p=s.split('-');const ms=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];return`${+p[2]}/${ms[+p[1]-1]}`;}
 function calcAge(dob){if(!dob)return'';const b=new Date(dob),n=new Date();let y=n.getFullYear()-b.getFullYear(),mo=n.getMonth()-b.getMonth();if(mo<0){y--;mo+=12;}if(n.getDate()<b.getDate())mo--;if(mo<0){y--;mo+=11;}if(y<0)return'';if(y===0)return`${mo} mes${mo!==1?'es':''}`;return mo===0?`${y} año${y>1?'s':''}`:`${y}a ${mo}m`;}
-function load(){try{const r=localStorage.getItem(SK);if(r){G=JSON.parse(r);if(!G.patient.medVisible)G.patient.medVisible={};if(!G.patient.importedFiles)G.patient.importedFiles=[];if(!G.doctor.patients)G.doctor.patients=[];}}catch(e){}}
+function load(){try{const r=localStorage.getItem(SK);if(r){G=JSON.parse(r);if(!G.patient.medVisible)G.patient.medVisible={};if(!G.patient.importedFiles)G.patient.importedFiles=[];if(!G.patient.weights)G.patient.weights=[];if(!G.doctor.patients)G.doctor.patients=[];if(G.doctor.activePatId===undefined)G.doctor.activePatId=null;G.doctor.patients.forEach(p=>{if(!p.weights)p.weights=[];if(!p.meds)p.meds=[];});}}catch(e){}}
 function save(){try{localStorage.setItem(SK,JSON.stringify(G));}catch(e){}}
 function getC(id){return PAL.find(c=>c.id===id)||PAL[0];}
 function buildColorPicker(cid,selId,onpick){document.getElementById(cid).innerHTML=PAL.map(c=>`<div class="cdot${c.id===selId?' sel':''}" style="background:${c.fill}" data-id="${c.id}" onclick="(${onpick})('${c.id}','${cid}')"></div>`).join('');}
@@ -1379,7 +1383,22 @@ function downloadTemplate(){const wb=XLSX.utils.book_new();const inst=[["PLANTIL
 // DOCTOR PROFILE
 function pickDocColor(id,cid){G.doctor.profile.colorId=id;document.querySelectorAll(`#${cid} .cdot`).forEach(d=>d.classList.toggle('sel',d.dataset.id===id));}
 function saveDoctorProfile(){const name=document.getElementById('d-name').value.trim();if(!name)return;G.doctor.profile={name,spec:document.getElementById('d-spec').value.trim(),colorId:G.doctor.profile.colorId||'slate'};save();document.getElementById('setup-doctor').style.display='none';launchDoctor();}
-function launchDoctor(){document.getElementById('app-doctor').style.display='block';document.getElementById('app-patient').style.display='none';const d=G.doctor.profile;document.getElementById('d-topname').textContent=d.name||'Doctor';document.getElementById('d-topspec').textContent=d.spec||'';document.getElementById('d-cfg-name').value=d.name||'';document.getElementById('d-cfg-spec').value=d.spec||'';buildColorPicker('d-cfg-colors',d.colorId||'slate','pickDocColor');renderDPatList();renderDCompareSlots();}
+function launchDoctor(){
+  document.getElementById('app-doctor').style.display='block';
+  document.getElementById('app-patient').style.display='none';
+  const d=G.doctor.profile;
+  document.getElementById('d-topname').textContent=d.name||'Doctor';
+  document.getElementById('d-topspec').textContent=d.spec||'';
+  const cn=document.getElementById('d-cfg-name');if(cn)cn.value=d.name||'';
+  const cs=document.getElementById('d-cfg-spec');if(cs)cs.value=d.spec||'';
+  buildColorPicker('d-cfg-colors',d.colorId||'slate','pickDocColor');
+  // Restaurar paciente activo desde G
+  if(G.doctor.activePatId){
+    _activeDoctorPatId=G.doctor.activePatId;
+  }
+  renderDPatList();
+  renderDCompareSlots();
+}
 function saveDCfg(){const name=document.getElementById('d-cfg-name').value.trim();if(!name)return;G.doctor.profile={name,spec:document.getElementById('d-cfg-spec').value.trim(),colorId:G.doctor.profile.colorId||'slate'};save();launchDoctor();showToast('Perfil guardado ✓');}
 function dTab(t,btn){document.querySelectorAll('#app-doctor .section').forEach(s=>s.classList.remove('active'));document.querySelectorAll('#app-doctor .tab').forEach(b=>b.classList.remove('active'));var _ds=document.getElementById('d-sec-'+t);if(_ds)_ds.classList.add('active');btn.classList.add('active');if(t==='view')renderDView();if(t==='graficos')renderDGraficos();if(t==='pharma')renderDPharma();if(t==='compare')renderDCompareSlots();}
 
