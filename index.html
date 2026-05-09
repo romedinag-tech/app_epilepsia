@@ -1841,6 +1841,7 @@ function renderDPharma(){
     <button class="ctrl-btn" onclick="showPharmaSection('resumen',this)">Resumen</button>
     <button class="ctrl-btn" onclick="showPharmaSection('graficos',this)">Lag Scan</button>
     <button class="ctrl-btn" onclick="showPharmaSection('barrido',this)">Barrido numérico</button>
+    <button class="ctrl-btn" onclick="showPharmaSection('iei',this)">IEI &amp; Clusters</button>
   </div>`;
 
   // ── RANGOS ──────────────────────────────────────────────
@@ -2054,6 +2055,7 @@ function showPharmaSection(sec,btn){
   const el=document.getElementById('pharma-'+sec);
   if(el) el.style.display='block';
   if(btn) btn.classList.add('active');
+  if(sec==='iei'){const p=getActivePat();if(p)renderIEICharts(p,'pharma-iei-content');}
 }
 
 
@@ -2195,7 +2197,10 @@ function renderDGraficos() {
       <div style="font-size:10px;color:var(--t3);text-align:center;margin-top:4px">
         Una línea por rango · % días con crisis en esa hora
       </div>
-    </div>`;
+    <!-- IEI & Clusters section -->
+  <div id="pharma-iei" class="pharma-sec" style="display:none">
+    <div id="pharma-iei-content"></div>
+  </div>`;
 
   // Legend for range colors
   const lgEl = document.getElementById('d-graf-rn-legend');
@@ -2493,6 +2498,266 @@ function renderIEISummary(events, meds, weightHistory, containerId) {
 }
 
 
+
+
+// ════════════════════════════════════════════════════════════
+// IEI + CLUSTERS — pestaña dentro de Farmacología
+// ════════════════════════════════════════════════════════════
+
+let _ieiCharts = {};
+
+function renderIEICharts(pat, containerId) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+
+  // Destruir charts anteriores
+  Object.values(_ieiCharts).forEach(c => { try { c.destroy(); } catch(e) {} });
+  _ieiCharts = {};
+
+  if (!pat?.events?.length || !pat?.meds?.length) {
+    el.innerHTML = '<div class="empty">Se necesitan crisis y medicamentos para este análisis.</div>';
+    return;
+  }
+
+  const summary = computeIEI(pat.events, pat.meds, pat.weights || []);
+  if (!summary || !Object.keys(summary).length) {
+    el.innerHTML = '<div class="empty">Sin datos suficientes para calcular IEI.</div>';
+    return;
+  }
+
+  const RCOLORS = {1:'#E65100',2:'#1565C0',3:'#2E7D32',4:'#6A1B9A',5:'#00838F'};
+  const RLABELS = {1:'R1 Kepra S',2:'R2 Kepra T',3:'R3 Kepra+',4:'R4 Depak.',5:'R5 Depak.+'};
+
+  const rnList = Object.keys(summary).map(Number).sort();
+
+  el.innerHTML = `
+    <!-- Advertencia metodológica -->
+    <div style="background:#FFF9C4;border-radius:var(--rm);padding:10px 13px;margin-bottom:12px;font-size:11px;color:#78350F;line-height:1.7;border-left:3px solid #F59E0B">
+      <strong>⚠ Datos nocturnos censurados (23h–7h):</strong> los intervalos que cruzan la noche son límites inferiores — no asumen calma durante el sueño. Solo se grafican IEI diurnos observables.
+    </div>
+    <!-- Gráfico 1: Boxplot IEI -->
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">Distribución de Intervalos Inter-Ictales diurnos</div>
+      <div style="font-size:11px;color:var(--t2);margin-bottom:8px">Solo períodos observables (7h–23h)</div>
+      <div style="position:relative;width:100%;height:240px"><canvas id="iei-box-chart"></canvas></div>
+      <div style="font-size:10px;color:var(--t3);text-align:center;margin-top:4px">
+        Barra = mediana · Caja = rango intercuartil · Líneas = mín/máx diurno
+      </div>
+    </div>
+    <!-- Gráfico 2: Clusters -->
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">Análisis de Clusters (≥2 crisis en ventana de 4 horas)</div>
+      <div style="position:relative;width:100%;height:220px"><canvas id="iei-cluster-chart"></canvas></div>
+      <div style="font-size:10px;color:var(--t3);text-align:center;margin-top:4px">
+        Barras sólidas = N° de clusters · Barras rayadas = tamaño promedio (eje derecho)
+      </div>
+    </div>
+    <!-- Tabla resumen -->
+    <div class="card">
+      <div class="card-title">Resumen por rango</div>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:320px" id="iei-table"></table>
+      </div>
+      <div style="font-size:10px;color:var(--t3);margin-top:8px;line-height:1.6">
+        Los intervalos nocturnos (cruce de días) son límites inferiores y <strong>no se incluyen</strong> en los promedios de IEI.
+      </div>
+    </div>`;
+
+  // ── Tabla resumen ──
+  const tbl = document.getElementById('iei-table');
+  tbl.innerHTML = `<thead><tr>
+    ${['Rango','Días','Crisis/día','Días libres','IEI mediana','N° clusters','Crisis/cluster']
+      .map(h=>`<th style="padding:6px 7px;background:var(--bg2);color:var(--t2);font-size:10px;text-transform:uppercase;border-bottom:.5px solid var(--bd);text-align:center">${h}</th>`)
+      .join('')}
+  </tr></thead><tbody>` +
+  rnList.map((rn,i) => {
+    const s = summary[rn];
+    const ac = s.avgDaily < 2 ? '#2E7D32' : s.avgDaily < 5 ? '#F59E0B' : '#C62828';
+    const ic = s.ieiMedian == null ? 'var(--t3)' : s.ieiMedian > 3 ? '#2E7D32' : s.ieiMedian > 1.5 ? '#F59E0B' : '#C62828';
+    const bg = i%2===0 ? 'var(--bg2)' : 'var(--bg)';
+    return `<tr style="background:${bg}">
+      <td style="padding:6px 7px;border-bottom:.5px solid var(--bd);border-left:3px solid ${RCOLORS[rn]};font-weight:700;font-size:11px">${RLABELS[rn]}</td>
+      <td style="padding:6px 7px;border-bottom:.5px solid var(--bd);text-align:center">${s.nDays}</td>
+      <td style="padding:6px 7px;border-bottom:.5px solid var(--bd);text-align:center;font-weight:700;color:${ac}">${s.avgDaily}</td>
+      <td style="padding:6px 7px;border-bottom:.5px solid var(--bd);text-align:center">${s.freeDays}d (${s.freePct}%)</td>
+      <td style="padding:6px 7px;border-bottom:.5px solid var(--bd);text-align:center;font-weight:700;color:${ic}">${s.ieiMedian != null ? s.ieiMedian+'h' : '—'}</td>
+      <td style="padding:6px 7px;border-bottom:.5px solid var(--bd);text-align:center;font-weight:700">${s.clN}</td>
+      <td style="padding:6px 7px;border-bottom:.5px solid var(--bd);text-align:center">${s.clSizeMean ?? '—'}</td>
+    </tr>`;
+  }).join('') + '</tbody>';
+
+  const {tc, gc} = getCS();
+
+  setTimeout(() => {
+    // ── Chart 1: Boxplot simulado con Chart.js ──
+    // Chart.js no tiene boxplot nativo, usamos barras flotantes (min→max) + punto en mediana
+    const labels  = rnList.map(rn => RLABELS[rn]);
+    const colors  = rnList.map(rn => RCOLORS[rn]);
+
+    // Calcular Q1, mediana, Q3, min, max para cada rango
+    const boxStats = rnList.map(rn => {
+      const ieis = computeIEI_raw_ieis(pat.events, pat.meds, pat.weights||[], rn);
+      if (!ieis.length) return null;
+      const sorted = [...ieis].sort((a,b)=>a-b);
+      const n = sorted.length;
+      const q1  = sorted[Math.floor(n*0.25)];
+      const med = sorted[Math.floor(n*0.5)];
+      const q3  = sorted[Math.floor(n*0.75)];
+      return { min: sorted[0], q1, med, q3, max: sorted[n-1], n };
+    });
+
+    // Dataset 1: caja Q1→Q3 (barra flotante)
+    // Dataset 2: línea min→max (error bar simulada)
+    // Dataset 3: punto mediana
+    const boxData  = boxStats.map(s => s ? [s.q1, s.q3] : [0,0]);
+    const minData  = boxStats.map(s => s ? s.min : 0);
+    const maxData  = boxStats.map(s => s ? s.max : 0);
+    const medData  = boxStats.map(s => s ? s.med : 0);
+
+    _ieiCharts.box = new Chart(document.getElementById('iei-box-chart'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Rango intercuartil (Q1–Q3)',
+            data: boxData,
+            backgroundColor: colors.map(c => c + '55'),
+            borderColor: colors,
+            borderWidth: 2,
+            borderRadius: 3,
+          },
+          {
+            label: 'Mediana',
+            type: 'scatter',
+            data: medData.map((v,i) => ({x: labels[i], y: v})),
+            backgroundColor: colors,
+            pointRadius: 7,
+            pointStyle: 'rectRot',
+            order: 0,
+          },
+          {
+            label: 'Mín/Máx',
+            type: 'scatter',
+            data: maxData.map((v,i) => ({x: labels[i], y: v})),
+            backgroundColor: colors.map(c=>c+'88'),
+            pointRadius: 5,
+            pointStyle: 'triangle',
+            order: 1,
+          }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: true, position: 'bottom',
+            labels: { color: tc, font: { size: 10 }, usePointStyle: true, boxWidth: 10 }
+          },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => {
+                const i = ctx.dataIndex;
+                const s = boxStats[i];
+                if (!s) return '';
+                if (ctx.datasetIndex === 0) return `Q1–Q3: ${s.q1}h – ${s.q3}h`;
+                if (ctx.datasetIndex === 1) return `Mediana: ${s.med}h (n=${s.n})`;
+                return `Máx: ${s.max}h`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: { ticks: { color: tc, font: { size: 9 } }, grid: { color: gc, lineWidth: .5 } },
+          y: {
+            title: { display: true, text: 'IEI diurno (horas)', color: tc, font: { size: 9 } },
+            ticks: { color: tc, font: { size: 9 } },
+            grid: { color: gc, lineWidth: .5 }, min: 0
+          }
+        }
+      }
+    });
+
+    // ── Chart 2: Clusters (barras dobles + eje Y derecho) ──
+    const clN    = rnList.map(rn => summary[rn]?.clN ?? 0);
+    const clSize = rnList.map(rn => summary[rn]?.clSizeMean ?? 0);
+
+    _ieiCharts.cluster = new Chart(document.getElementById('iei-cluster-chart'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'N° de clusters',
+            data: clN,
+            backgroundColor: colors.map(c => c + '99'),
+            borderColor: colors,
+            borderWidth: 1.5,
+            borderRadius: 3,
+            yAxisID: 'y',
+          },
+          {
+            label: 'Crisis/cluster (promedio)',
+            data: clSize,
+            backgroundColor: colors.map(c => c + '44'),
+            borderColor: colors,
+            borderWidth: 1.5,
+            borderRadius: 3,
+            borderDash: [4,4],
+            yAxisID: 'y2',
+          }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: true, position: 'bottom',
+            labels: { color: tc, font: { size: 10 }, boxWidth: 12 }
+          },
+          tooltip: { mode: 'index', intersect: false }
+        },
+        scales: {
+          x: { ticks: { color: tc, font: { size: 9 } }, grid: { color: gc, lineWidth: .5 } },
+          y: {
+            title: { display: true, text: 'N° de clusters', color: tc, font: { size: 9 } },
+            ticks: { color: tc, font: { size: 9 }, precision: 0 },
+            grid: { color: gc, lineWidth: .5 }, min: 0, position: 'left'
+          },
+          y2: {
+            title: { display: true, text: 'Crisis/cluster', color: tc, font: { size: 9 } },
+            ticks: { color: tc, font: { size: 9 } },
+            grid: { display: false }, min: 0, position: 'right'
+          }
+        }
+      }
+    });
+
+  }, 200);
+}
+
+// Helper: extraer IEIs raw de un rango específico
+function computeIEI_raw_ieis(events, meds, weights, targetRn) {
+  const pesoKg = weights?.length
+    ? [...weights].sort((a,b)=>a.date.localeCompare(b.date)).slice(-1)[0].kg : 26.5;
+  const allDates = [...new Set(events.map(e=>e.date))].sort();
+  const medMap   = buildDailyMedsMap(meds, allDates);
+  const dateToRn = {};
+  allDates.forEach(d => { dateToRn[d] = getDayRange(medMap[d]||{}, pesoKg); });
+
+  const evsSorted = [...events]
+    .filter(e => e.hour>=7 && e.hour<=23)
+    .sort((a,b) => a.date.localeCompare(b.date)||a.hour-b.hour);
+
+  const ieis = [];
+  for (let i=1; i<evsSorted.length; i++) {
+    const prev=evsSorted[i-1], curr=evsSorted[i];
+    if (dateToRn[curr.date] !== targetRn) continue;
+    if (prev.date === curr.date) {
+      const iei = (curr.hour+0.5) - (prev.hour+0.5);
+      if (iei > 0) ieis.push(iei);
+    }
+  }
+  return ieis;
+}
 
 
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
