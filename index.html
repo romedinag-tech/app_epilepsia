@@ -364,8 +364,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <img src="icons/logo-bg.png" alt="" style="width:60px;height:60px;object-fit:contain;display:block;margin:0 auto 8px" onerror="this.style.display='none'">
         <div style="font-size:20px;font-weight:800;color:var(--t1)">Epy <span style="color:var(--cf)">Analytics</span></div>
       </div>
-      <p style="font-size:13px;color:var(--t2);line-height:1.85;margin-bottom:12px">Esta aplicaci&#243;n la hicimos los pap&#225;s de Facundo entre diciembre del 2025 y marzo del 2026, cuando nuestro hijo comenz&#243; con un cuadro de epilepsia focal. Estos gr&#225;ficos nos ayudaron a entender mejor lo que estaba pasando, c&#243;mo evolucionaba y nos permit&#237;a entregarle mejor informaci&#243;n a sus m&#233;dicos.</p>
-      <p style="font-size:13px;color:var(--t2);line-height:1.85;margin-bottom:12px">Esta aplicaci&#243;n tiene por objetivo ayudar y <strong style="color:var(--t1)">no representa en ning&#250;n caso una forma de diagn&#243;stico m&#233;dico</strong>.</p>
+      <p style="font-size:13px;color:var(--t2);line-height:1.85;margin-bottom:12px;text-align:justify;font-style:italic">Esta aplicaci&#243;n la hicimos los pap&#225;s de Facundo entre diciembre del 2025 y marzo del 2026, cuando nuestro hijo comenz&#243; con un cuadro de epilepsia focal. Estos gr&#225;ficos nos ayudaron a entender mejor lo que estaba pasando, c&#243;mo evolucionaba y nos permit&#237;a entregarle mejor informaci&#243;n a sus m&#233;dicos.</p>
+      <p style="font-size:13px;color:var(--t2);line-height:1.85;margin-bottom:12px;text-align:justify;font-style:italic">Esta aplicaci&#243;n tiene por objetivo ayudar y <strong style="color:var(--t1)">no representa en ning&#250;n caso una forma de diagn&#243;stico m&#233;dico</strong>.</p>
       <div style="background:var(--bg2);border-radius:var(--rm);padding:12px 14px;font-size:12px;color:var(--t2);line-height:1.7">
         Esta es la base de datos real de Facundo. Con ella pod&#233;s explorar todas las funcionalidades de la aplicaci&#243;n.
       </div>
@@ -520,8 +520,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <img src="icons/logo-bg.png" alt="" style="width:60px;height:60px;object-fit:contain;display:block;margin:0 auto 8px" onerror="this.style.display='none'">
         <div style="font-size:20px;font-weight:800;color:var(--t1)">Epy <span style="color:var(--cf)">Analytics</span></div>
       </div>
-      <p style="font-size:13px;color:var(--t2);line-height:1.85;margin-bottom:12px">Esta aplicaci&#243;n la hicimos los pap&#225;s de Facundo entre diciembre del 2025 y marzo del 2026, cuando nuestro hijo comenz&#243; con un cuadro de epilepsia focal. Estos gr&#225;ficos nos ayudaron a entender mejor lo que estaba pasando, c&#243;mo evolucionaba y nos permit&#237;a entregarle mejor informaci&#243;n a sus m&#233;dicos.</p>
-      <p style="font-size:13px;color:var(--t2);line-height:1.85;margin-bottom:12px">Esta aplicaci&#243;n tiene por objetivo ayudar y <strong style="color:var(--t1)">no representa en ning&#250;n caso una forma de diagn&#243;stico m&#233;dico</strong>.</p>
+      <p style="font-size:13px;color:var(--t2);line-height:1.85;margin-bottom:12px;text-align:justify;font-style:italic">Esta aplicaci&#243;n la hicimos los pap&#225;s de Facundo entre diciembre del 2025 y marzo del 2026, cuando nuestro hijo comenz&#243; con un cuadro de epilepsia focal. Estos gr&#225;ficos nos ayudaron a entender mejor lo que estaba pasando, c&#243;mo evolucionaba y nos permit&#237;a entregarle mejor informaci&#243;n a sus m&#233;dicos.</p>
+      <p style="font-size:13px;color:var(--t2);line-height:1.85;margin-bottom:12px;text-align:justify;font-style:italic">Esta aplicaci&#243;n tiene por objetivo ayudar y <strong style="color:var(--t1)">no representa en ning&#250;n caso una forma de diagn&#243;stico m&#233;dico</strong>.</p>
       <div style="background:var(--bg2);border-radius:var(--rm);padding:12px 14px;font-size:12px;color:var(--t2);line-height:1.7">
         Esta es la base de datos real de Facundo. Con ella pod&#233;s explorar todas las funcionalidades de la aplicaci&#243;n.
       </div>
@@ -2225,10 +2225,16 @@ function renderDGraficos() {
   if (lgEl2) {
     Object.entries(RANGO_DEF).forEach(([rn, ri]) => {
       if (!rangeDayCounts[rn]) return;
-      const span = document.createElement('span');
-      span.style.cssText = `display:flex;align-items:center;gap:4px;font-size:11px;color:var(--t2)`;
-      span.innerHTML = `<span style="width:16px;border-top:2.5px solid ${ri.color};display:inline-block"></span>${ri.short}`;
-      lgEl2.appendChild(span);
+      const lbl = document.createElement('label');
+      lbl.style.cssText = 'display:flex;align-items:center;gap:5px;cursor:pointer;font-size:11px;color:var(--t2);user-select:none';
+      const cb = document.createElement('input');
+      cb.type = 'checkbox'; cb.checked = true;
+      cb.style.accentColor = ri.color; cb.dataset.rn = rn;
+      const dot = document.createElement('span');
+      dot.style.cssText = `width:16px;border-top:2.5px solid ${ri.color};display:inline-block;flex-shrink:0`;
+      lbl.appendChild(cb); lbl.appendChild(dot);
+      lbl.appendChild(document.createTextNode(ri.label));
+      lgEl2.appendChild(lbl);
     });
   }
 
@@ -2340,6 +2346,16 @@ function renderDGraficos() {
              grid:{color:gc,lineWidth:.5},min:0,max:Math.ceil((maxP+10)/10)*10}
         }
       }
+    });
+    // Conectar checkboxes con visibilidad de datasets
+    document.querySelectorAll('#d-graf-range-legend input[type=checkbox]').forEach(cb => {
+      cb.addEventListener('change', () => {
+        const idx = rangeDatasets.findIndex(ds => ds.label === RANGO_DEF[cb.dataset.rn]?.label);
+        if (idx >= 0) {
+          _dGrafCharts['probRanges'].setDatasetVisibility(idx, cb.checked);
+          _dGrafCharts['probRanges'].update();
+        }
+      });
     });
   }, 200);
 }
